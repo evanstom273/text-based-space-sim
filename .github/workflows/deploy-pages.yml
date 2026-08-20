@@ -67,12 +67,14 @@ jobs:
           for attempt in 1 2 3 4 5 6; do
             sleep 10
             html="$(curl -fsSL "$SITE_URL")"
+            version="$(curl -fsSL "$SITE_URL/version.json")"
             live="$(printf '%s' "$html" | sed -n 's/.*name="build-id" content="\([^"]*\)".*/\1/p' | head -n 1)"
-            if [ "$live" = "$target" ]; then
-              echo "Live site verified: BLD $live"
+            live_json="$(printf '%s' "$version" | sed -n 's/.*"buildId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+            if [ "$live" = "$target" ] && [ "$live_json" = "$target" ]; then
+              echo "Live site verified: BLD $live (html + version.json)"
               exit 0
             fi
-            echo "Attempt $attempt: live='$live' expected='$target'"
+            echo "Attempt $attempt: html='$live' version='$live_json' expected='$target'"
           done
           echo "Deploy verification failed after 60s"
           exit 1

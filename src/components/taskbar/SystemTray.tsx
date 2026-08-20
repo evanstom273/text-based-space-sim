@@ -1,9 +1,10 @@
 import { useShipClock } from '../../context/ClockContext';
-import { formatClock, formatStardate } from '../../utils/terminalTime';
+import { formatClock } from '../../utils/terminalTime';
+import { formatShipDate, formatShipStardate } from '../../utils/shipCalendar';
 import { Wifi } from 'lucide-react';
 
 export function SystemTray() {
-	const { shipTime } = useShipClock();
+	const { shipTime, calendarDate } = useShipClock();
 
 	return (
 		<div className="ml-auto flex shrink-0 items-center gap-2 pl-1 sm:gap-3 sm:pl-2">
@@ -14,8 +15,9 @@ export function SystemTray() {
 				</span>
 			</div>
 			<div className="hidden border-l border-[var(--border-silver)] pl-3 text-right leading-tight sm:block">
+				<div className="font-mono text-[10px] text-[var(--accent-gold)]">{formatShipDate(calendarDate)}</div>
 				<div className="font-mono text-xs font-medium text-white">{formatClock(shipTime)}</div>
-				<div className="font-mono text-[9px] text-[var(--accent-gold)]">{formatStardate(shipTime)}</div>
+				<div className="font-mono text-[9px] text-[var(--accent-gold)]">{formatShipStardate(calendarDate)}</div>
 			</div>
 		</div>
 	);

@@ -5,9 +5,12 @@ import { WindowFrame } from '../window/WindowFrame';
 import { SnapOverlay } from '../window/SnapOverlay';
 import { Taskbar } from '../taskbar/Taskbar';
 import { ShipInsignia } from '../common/ShipInsignia';
+import { DayEndModal } from '../chrono/DayEndModal';
+import { TimeControls } from '../chrono/TimeControls';
 import { useWindowManager } from '../../context/WindowManagerContext';
 import { useShipClock } from '../../context/ClockContext';
-import { formatClock, formatStardate } from '../../utils/terminalTime';
+import { formatClock } from '../../utils/terminalTime';
+import { formatShipDate, formatShipStardate } from '../../utils/shipCalendar';
 import { BUILD_ID } from '../../config/buildInfo';
 
 export const SHIP_INFO = {
@@ -18,7 +21,7 @@ export const SHIP_INFO = {
 } as const;
 
 export function ShipStatusBar() {
-	const { shipTime } = useShipClock();
+	const { shipTime, calendarDate } = useShipClock();
 
 	return (
 		<header className="terminal-chrome terminal-chrome-top relative z-[600] flex h-14 shrink-0 items-stretch px-0 text-[11px] text-[var(--text-silver)]">
@@ -42,7 +45,7 @@ export function ShipStatusBar() {
 				<div className="flex items-center gap-2 rounded-sm border border-[var(--border-silver)] bg-[var(--surface-inset)]/60 px-3 py-1">
 					<span className="h-1 w-1 rounded-full bg-[var(--accent-purple-bright)] shadow-[0_0_6px_var(--accent-purple-glow)]" />
 					<span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-silver)]">
-						{formatStardate(shipTime)}
+						{formatShipStardate(calendarDate)}
 					</span>
 				</div>
 			</div>
@@ -57,7 +60,7 @@ export function ShipStatusBar() {
 
 			<div className="terminal-divider my-2 hidden sm:block" />
 
-			<div className="flex items-center gap-2 px-3 sm:gap-3 sm:px-4">
+			<div className="ml-auto flex items-center gap-2 px-2 sm:gap-3 sm:px-4">
 				<div className="status-nominal hidden items-center gap-1.5 border px-2.5 py-1 sm:flex terminal-bevel-sm">
 					<span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(110,231,160,0.6)]" />
 					<span className="font-mono text-[9px] uppercase tracking-wider">{SHIP_INFO.alertStatus}</span>
@@ -74,13 +77,18 @@ export function ShipStatusBar() {
 
 				<div className="terminal-divider hidden h-6 sm:block" />
 
+				<TimeControls />
+
 				<div className="text-right leading-tight">
+					<div className="font-mono text-[10px] text-[var(--accent-gold)] sm:text-[11px]">
+						{formatShipDate(calendarDate)}
+					</div>
 					<div className="font-mono text-sm font-medium text-white">{formatClock(shipTime)}</div>
 					<div className="hidden font-mono text-[9px] text-[var(--accent-purple-bright)] sm:block">
-						{formatStardate(shipTime)}
+						{formatShipStardate(calendarDate)}
 					</div>
 					<div
-						className="font-mono text-[8px] tracking-wider text-[var(--text-silver-dim)] opacity-50"
+						className="hidden font-mono text-[8px] tracking-wider text-[var(--text-silver-dim)] opacity-50 sm:block"
 						title="Terminal build — confirms latest deploy loaded"
 					>
 						BLD {BUILD_ID}
@@ -110,6 +118,7 @@ export function Desktop() {
 				<SnapOverlay snapTarget={snapTarget} />
 			</div>
 			<Taskbar />
+			<DayEndModal />
 		</div>
 	);
 }
