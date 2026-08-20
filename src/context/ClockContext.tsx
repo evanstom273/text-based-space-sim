@@ -19,14 +19,18 @@ import {
 } from '../utils/shipCalendar';
 import {
 	getDefaultShipState,
-	loadPersistedShipState,
-	savePersistedShipState,
 	type ShipStateSnapshot,
 } from '../utils/shipPersistence';
 import {
 	simulateChronoToTarget,
 	type ChronoSimulationResult,
 } from '../utils/chronoSimulation';
+
+interface ClockProviderProps {
+	initialSnapshot?: ShipStateSnapshot;
+	onSnapshotChange?: (snapshot: ShipStateSnapshot) => void;
+	children: ReactNode;
+}
 
 interface ClockContextValue {
 	shipTime: Date;
@@ -49,12 +53,12 @@ interface ClockContextValue {
 
 const ClockContext = createContext<ClockContextValue | undefined>(undefined);
 
-function resolveInitialState(): ShipStateSnapshot {
-	return loadPersistedShipState() ?? getDefaultShipState();
-}
-
-export function ClockProvider({ children }: { children: ReactNode }) {
-	const [initialState] = useState(resolveInitialState);
+export function ClockProvider({
+	initialSnapshot,
+	onSnapshotChange,
+	children,
+}: ClockProviderProps) {
+	const [initialState] = useState(() => initialSnapshot ?? getDefaultShipState());
 	const [persistenceReady, setPersistenceReady] = useState(false);
 	const [absoluteDay, setAbsoluteDay] = useState(initialState.absoluteDay);
 	const [minutesInDay, setMinutesInDay] = useState(initialState.minutesInDay);
@@ -68,9 +72,9 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	useEffect(() => {
-		if (!persistenceReady) return;
+		if (!persistenceReady || !onSnapshotChange) return;
 
-		savePersistedShipState({
+		onSnapshotChange({
 			absoluteDay,
 			minutesInDay,
 			tickIntervalSeconds,
@@ -80,6 +84,7 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 		});
 	}, [
 		persistenceReady,
+		onSnapshotChange,
 		absoluteDay,
 		minutesInDay,
 		tickIntervalSeconds,

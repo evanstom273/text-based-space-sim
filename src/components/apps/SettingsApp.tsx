@@ -8,6 +8,8 @@ import { useShipClock } from '../../context/ClockContext';
 import { formatClock } from '../../utils/terminalTime';
 import { formatShipDate } from '../../utils/shipCalendar';
 import { AppIconRenderer } from '../common/AppIconRenderer';
+import { useGameSession } from '../../context/GameSessionContext';
+import { formatDisplayShipName } from '../../utils/profileRandomizer';
 
 interface SettingsAppProps {
 	windowId: string;
@@ -15,7 +17,30 @@ interface SettingsAppProps {
 }
 
 export function SettingsApp(_props: SettingsAppProps) {
-	const { shipTime, calendarDate, tickIntervalSeconds, setTickIntervalSeconds } = useShipClock();
+	const {
+		shipTime,
+		calendarDate,
+		tickIntervalSeconds,
+		setTickIntervalSeconds,
+		absoluteDay,
+		minutesInDay,
+		speedMultiplier,
+		paused,
+		dayEndPending,
+	} = useShipClock();
+	const { activeProfile, persistActiveSimulation, relinquishCommand } = useGameSession();
+
+	const handleRelinquishCommand = () => {
+		persistActiveSimulation({
+			absoluteDay,
+			minutesInDay,
+			tickIntervalSeconds,
+			speedMultiplier,
+			paused,
+			dayEndPending,
+		});
+		relinquishCommand();
+	};
 
 	return (
 		<div className="module-shell module-workspace select-text">
@@ -74,6 +99,23 @@ export function SettingsApp(_props: SettingsAppProps) {
 						</div>
 					</label>
 				</section>
+
+				{activeProfile ? (
+					<section className="module-panel rounded-sm p-4 terminal-bevel-sm">
+						<h3 className="module-heading">Command profile</h3>
+						<p className="module-copy-muted mt-1">
+							Active assignment: {activeProfile.captain.name} ·{' '}
+							{formatDisplayShipName(activeProfile.vessel.name)} ({activeProfile.vessel.registry})
+						</p>
+						<button
+							type="button"
+							className="game-btn game-btn--ghost mt-4"
+							onClick={handleRelinquishCommand}
+						>
+							RELINQUISH COMMAND
+						</button>
+					</section>
+				) : null}
 			</div>
 		</div>
 	);

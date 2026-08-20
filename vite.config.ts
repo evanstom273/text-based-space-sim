@@ -39,7 +39,7 @@ export default defineConfig({
 			manifest: {
 				name: 'Union Terminal — Starship Command',
 				short_name: 'Union Terminal',
-				description: 'USS Clements Planetary Union command terminal',
+				description: 'Planetary Union command terminal — starship operations',
 				theme_color: '#202020',
 				background_color: '#202020',
 				display: 'standalone',

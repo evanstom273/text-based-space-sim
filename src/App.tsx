@@ -1,14 +1,11 @@
-import { WindowManagerProvider } from './context/WindowManagerContext';
-import { ClockProvider } from './context/ClockContext';
-import { Desktop } from './components/desktop/Desktop';
+import { GameSessionProvider } from './context/GameSessionContext';
+import { GameShell } from './components/game/GameShell';
 
 export function App() {
 	return (
-		<WindowManagerProvider>
-			<ClockProvider>
-				<Desktop />
-			</ClockProvider>
-		</WindowManagerProvider>
+		<GameSessionProvider>
+			<GameShell />
+		</GameSessionProvider>
 	);
 }
 
