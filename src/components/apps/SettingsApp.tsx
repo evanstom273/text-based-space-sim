@@ -1,10 +1,12 @@
 import {
-	DEFAULT_MINUTES_PER_TICK,
-	MAX_MINUTES_PER_TICK,
-	MIN_MINUTES_PER_TICK,
-	useShipClock,
-} from '../../context/ClockContext';
+	DEFAULT_TICK_INTERVAL_SECONDS,
+	MAX_TICK_INTERVAL_SECONDS,
+	MIN_TICK_INTERVAL_SECONDS,
+	MINUTES_PER_CHRONO_TICK,
+} from '../../utils/shipCalendar';
+import { useShipClock } from '../../context/ClockContext';
 import { formatClock } from '../../utils/terminalTime';
+import { formatShipDate } from '../../utils/shipCalendar';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 
 interface SettingsAppProps {
@@ -13,8 +15,7 @@ interface SettingsAppProps {
 }
 
 export function SettingsApp(_props: SettingsAppProps) {
-	const { shipTime, minutesPerTick, setMinutesPerTick, tickIntervalMs } = useShipClock();
-	const tickSeconds = tickIntervalMs / 1000;
+	const { shipTime, calendarDate, tickIntervalSeconds, setTickIntervalSeconds } = useShipClock();
 
 	return (
 		<div className="flex h-full flex-col bg-gradient-to-b from-[#f2f2f5] to-[#e4e4ea] text-[#2a2a2e] select-text">
@@ -42,39 +43,38 @@ export function SettingsApp(_props: SettingsAppProps) {
 								Ship chronometer
 							</h3>
 							<p className="mt-1 text-[11px] leading-relaxed text-[#5a5a64]">
-								Terminal clock starts at 09:00 and advances in configurable increments.
+								Calendar begins 01 Jan 2420 at 09:00. Each cycle advances{' '}
+								{MINUTES_PER_CHRONO_TICK} minutes of ship time.
 							</p>
 						</div>
 						<div className="rounded-sm border border-[#c8c8d4] bg-[#f8f8fa] px-3 py-2 text-right">
 							<p className="font-mono text-lg font-medium text-[#1a1a1e]">{formatClock(shipTime)}</p>
-							<p className="font-mono text-[9px] uppercase tracking-wider text-[#9898a4]">
-								Current ship time
-							</p>
+							<p className="font-mono text-[10px] text-[#5a5a64]">{formatShipDate(calendarDate)}</p>
 						</div>
 					</div>
 
 					<label className="block">
 						<div className="mb-2 flex items-center justify-between gap-3">
 							<span className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#3a3a42]">
-								Minutes per chrono cycle
+								Seconds between chrono cycles
 							</span>
 							<span className="font-mono text-[11px] text-[var(--accent-purple-dim)]">
-								{minutesPerTick.toString().padStart(2, '0')} min / {tickSeconds}s
+								{tickIntervalSeconds}s / {MINUTES_PER_CHRONO_TICK} min
 							</span>
 						</div>
 						<input
 							type="range"
-							min={MIN_MINUTES_PER_TICK}
-							max={MAX_MINUTES_PER_TICK}
-							step={5}
-							value={minutesPerTick}
-							onChange={(event) => setMinutesPerTick(Number(event.target.value))}
+							min={MIN_TICK_INTERVAL_SECONDS}
+							max={MAX_TICK_INTERVAL_SECONDS}
+							step={1}
+							value={tickIntervalSeconds}
+							onChange={(event) => setTickIntervalSeconds(Number(event.target.value))}
 							className="settings-slider w-full"
 						/>
 						<div className="mt-2 flex justify-between font-mono text-[9px] uppercase tracking-wider text-[#9898a4]">
-							<span>{MIN_MINUTES_PER_TICK} min</span>
-							<span>Default {DEFAULT_MINUTES_PER_TICK} min</span>
-							<span>{MAX_MINUTES_PER_TICK} min</span>
+							<span>{MIN_TICK_INTERVAL_SECONDS}s</span>
+							<span>Default {DEFAULT_TICK_INTERVAL_SECONDS}s</span>
+							<span>{MAX_TICK_INTERVAL_SECONDS}s</span>
 						</div>
 					</label>
 				</section>

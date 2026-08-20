@@ -1,61 +1,121 @@
 import {
 	createContext,
+	useCallback,
 	useContext,
 	useEffect,
 	useMemo,
 	useState,
 	type ReactNode,
 } from 'react';
-
-export const SHIP_CLOCK_START_MINUTES = 9 * 60;
-export const SHIP_CLOCK_TICK_MS = 10_000;
-export const DEFAULT_MINUTES_PER_TICK = 30;
-export const MIN_MINUTES_PER_TICK = 5;
-export const MAX_MINUTES_PER_TICK = 120;
+import {
+	absoluteDayToCalendar,
+	calendarToShipDate,
+	DEFAULT_TICK_INTERVAL_SECONDS,
+	MAX_TICK_INTERVAL_SECONDS,
+	MIN_TICK_INTERVAL_SECONDS,
+	MINUTES_PER_CHRONO_TICK,
+	MINUTES_PER_DAY,
+	SHIP_DAY_START_MINUTES,
+	type ShipCalendarDate,
+	type TimeSpeedMultiplier,
+} from '../utils/shipCalendar';
 
 interface ClockContextValue {
 	shipTime: Date;
+	calendarDate: ShipCalendarDate;
 	minutesPerTick: number;
-	setMinutesPerTick: (minutes: number) => void;
-	tickIntervalMs: number;
+	tickIntervalSeconds: number;
+	setTickIntervalSeconds: (seconds: number) => void;
+	speedMultiplier: TimeSpeedMultiplier;
+	setSpeedMultiplier: (speed: TimeSpeedMultiplier) => void;
+	paused: boolean;
+	setPaused: (paused: boolean) => void;
+	togglePause: () => void;
+	dayEndPending: boolean;
+	acknowledgeDayEnd: () => void;
 }
 
 const ClockContext = createContext<ClockContextValue | undefined>(undefined);
 
-function minutesToShipDate(totalMinutes: number): Date {
-	const wrapped = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
-	const date = new Date();
-	date.setHours(Math.floor(wrapped / 60), wrapped % 60, 0, 0);
-	return date;
-}
-
 export function ClockProvider({ children }: { children: ReactNode }) {
-	const [totalMinutes, setTotalMinutes] = useState(SHIP_CLOCK_START_MINUTES);
-	const [minutesPerTick, setMinutesPerTickState] = useState(DEFAULT_MINUTES_PER_TICK);
+	const [absoluteDay, setAbsoluteDay] = useState(0);
+	const [minutesInDay, setMinutesInDay] = useState(SHIP_DAY_START_MINUTES);
+	const [tickIntervalSeconds, setTickIntervalSecondsState] = useState(DEFAULT_TICK_INTERVAL_SECONDS);
+	const [speedMultiplier, setSpeedMultiplier] = useState<TimeSpeedMultiplier>(1);
+	const [paused, setPaused] = useState(false);
+	const [dayEndPending, setDayEndPending] = useState(false);
 
 	useEffect(() => {
+		if (paused || dayEndPending) return;
+
+		const intervalMs = (tickIntervalSeconds * 1000) / speedMultiplier;
 		const interval = window.setInterval(() => {
-			setTotalMinutes((current) => current + minutesPerTick);
-		}, SHIP_CLOCK_TICK_MS);
+			setMinutesInDay((current) => {
+				const next = current + MINUTES_PER_CHRONO_TICK;
+				if (next >= MINUTES_PER_DAY) {
+					setDayEndPending(true);
+					setPaused(true);
+					return MINUTES_PER_DAY - MINUTES_PER_CHRONO_TICK;
+				}
+				return next;
+			});
+		}, intervalMs);
 
 		return () => window.clearInterval(interval);
-	}, [minutesPerTick]);
+	}, [paused, dayEndPending, tickIntervalSeconds, speedMultiplier]);
 
-	const setMinutesPerTick = (minutes: number) => {
-		const clamped = Math.min(MAX_MINUTES_PER_TICK, Math.max(MIN_MINUTES_PER_TICK, minutes));
-		setMinutesPerTickState(clamped);
-	};
+	const setTickIntervalSeconds = useCallback((seconds: number) => {
+		const clamped = Math.min(
+			MAX_TICK_INTERVAL_SECONDS,
+			Math.max(MIN_TICK_INTERVAL_SECONDS, Math.round(seconds)),
+		);
+		setTickIntervalSecondsState(clamped);
+	}, []);
 
-	const shipTime = useMemo(() => minutesToShipDate(totalMinutes), [totalMinutes]);
+	const togglePause = useCallback(() => {
+		if (dayEndPending) return;
+		setPaused((current) => !current);
+	}, [dayEndPending]);
+
+	const acknowledgeDayEnd = useCallback(() => {
+		setAbsoluteDay((current) => current + 1);
+		setMinutesInDay(SHIP_DAY_START_MINUTES);
+		setDayEndPending(false);
+		setPaused(false);
+	}, []);
+
+	const calendarDate = useMemo(() => absoluteDayToCalendar(absoluteDay), [absoluteDay]);
+	const shipTime = useMemo(
+		() => calendarToShipDate(absoluteDay, minutesInDay),
+		[absoluteDay, minutesInDay],
+	);
 
 	const value = useMemo<ClockContextValue>(
 		() => ({
 			shipTime,
-			minutesPerTick,
-			setMinutesPerTick,
-			tickIntervalMs: SHIP_CLOCK_TICK_MS,
+			calendarDate,
+			minutesPerTick: MINUTES_PER_CHRONO_TICK,
+			tickIntervalSeconds,
+			setTickIntervalSeconds,
+			speedMultiplier,
+			setSpeedMultiplier,
+			paused,
+			setPaused,
+			togglePause,
+			dayEndPending,
+			acknowledgeDayEnd,
 		}),
-		[shipTime, minutesPerTick],
+		[
+			shipTime,
+			calendarDate,
+			tickIntervalSeconds,
+			setTickIntervalSeconds,
+			speedMultiplier,
+			paused,
+			togglePause,
+			dayEndPending,
+			acknowledgeDayEnd,
+		],
 	);
 
 	return <ClockContext.Provider value={value}>{children}</ClockContext.Provider>;
