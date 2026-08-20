@@ -22,8 +22,8 @@ export function DayEndModal() {
 					{formatShipDateLong(calendarDate)}
 				</h2>
 				<p className="mt-3 text-sm leading-relaxed text-[var(--text-silver-dim)]">
-					Ship chronometer reached {formatClock(shipTime)}. Operational day complete. Advance calendar
-					and resume on the next morning watch?
+					Ship chronometer reached {formatClock(shipTime)}. A new operational day has begun. Continue
+					from midnight?
 				</p>
 				<button
 					type="button"
