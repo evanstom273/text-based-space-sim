@@ -9,6 +9,7 @@ import { formatClock } from '../../utils/terminalTime';
 import { formatShipDate } from '../../utils/shipCalendar';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 import { useGameSession } from '../../context/GameSessionContext';
+import { useRelinquishCommand } from '../../hooks/useRelinquishCommand';
 import { formatDisplayShipName } from '../../utils/profileRandomizer';
 
 interface SettingsAppProps {
@@ -17,30 +18,9 @@ interface SettingsAppProps {
 }
 
 export function SettingsApp(_props: SettingsAppProps) {
-	const {
-		shipTime,
-		calendarDate,
-		tickIntervalSeconds,
-		setTickIntervalSeconds,
-		absoluteDay,
-		minutesInDay,
-		speedMultiplier,
-		paused,
-		dayEndPending,
-	} = useShipClock();
-	const { activeProfile, persistActiveSimulation, relinquishCommand } = useGameSession();
-
-	const handleRelinquishCommand = () => {
-		persistActiveSimulation({
-			absoluteDay,
-			minutesInDay,
-			tickIntervalSeconds,
-			speedMultiplier,
-			paused,
-			dayEndPending,
-		});
-		relinquishCommand();
-	};
+	const { shipTime, calendarDate, tickIntervalSeconds, setTickIntervalSeconds } = useShipClock();
+	const { activeProfile } = useGameSession();
+	const handleRelinquishCommand = useRelinquishCommand();
 
 	return (
 		<div className="module-shell module-workspace select-text">
