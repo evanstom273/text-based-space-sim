@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Battery, Signal, Wifi } from 'lucide-react';
 import { DesktopIconGrid } from './DesktopIconGrid';
 import { TerminalBackground } from './TerminalBackground';
@@ -7,6 +6,7 @@ import { SnapOverlay } from '../window/SnapOverlay';
 import { Taskbar } from '../taskbar/Taskbar';
 import { ShipInsignia } from '../common/ShipInsignia';
 import { useWindowManager } from '../../context/WindowManagerContext';
+import { useShipClock } from '../../context/ClockContext';
 import { formatClock, formatStardate } from '../../utils/terminalTime';
 import { BUILD_ID } from '../../config/buildInfo';
 
@@ -18,12 +18,7 @@ export const SHIP_INFO = {
 } as const;
 
 export function ShipStatusBar() {
-	const [now, setNow] = useState(() => new Date());
-
-	useEffect(() => {
-		const interval = window.setInterval(() => setNow(new Date()), 1000);
-		return () => window.clearInterval(interval);
-	}, []);
+	const { shipTime } = useShipClock();
 
 	return (
 		<header className="terminal-chrome terminal-chrome-top relative z-[600] flex h-14 shrink-0 items-stretch px-0 text-[11px] text-[var(--text-silver)]">
@@ -47,7 +42,7 @@ export function ShipStatusBar() {
 				<div className="flex items-center gap-2 rounded-sm border border-[var(--border-silver)] bg-[var(--surface-inset)]/60 px-3 py-1">
 					<span className="h-1 w-1 rounded-full bg-[var(--accent-purple-bright)] shadow-[0_0_6px_var(--accent-purple-glow)]" />
 					<span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--text-silver)]">
-						{formatStardate(now)}
+						{formatStardate(shipTime)}
 					</span>
 				</div>
 			</div>
@@ -80,9 +75,9 @@ export function ShipStatusBar() {
 				<div className="terminal-divider hidden h-6 sm:block" />
 
 				<div className="text-right leading-tight">
-					<div className="font-mono text-sm font-medium text-white">{formatClock(now)}</div>
+					<div className="font-mono text-sm font-medium text-white">{formatClock(shipTime)}</div>
 					<div className="hidden font-mono text-[9px] text-[var(--accent-purple-bright)] sm:block">
-						{formatStardate(now)}
+						{formatStardate(shipTime)}
 					</div>
 					<div
 						className="font-mono text-[8px] tracking-wider text-[var(--text-silver-dim)] opacity-50"
@@ -100,7 +95,7 @@ export function Desktop() {
 	const { windows, snapTarget } = useWindowManager();
 
 	return (
-		<div className="relative flex h-screen w-screen flex-col overflow-hidden bg-terminal-pattern select-none">
+		<div className="relative flex h-dvh w-screen flex-col overflow-hidden bg-terminal-pattern select-none">
 			<ShipStatusBar />
 			<div className="relative min-h-0 flex-1 terminal-workspace">
 				<TerminalBackground />
