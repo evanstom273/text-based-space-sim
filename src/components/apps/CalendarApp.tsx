@@ -118,36 +118,32 @@ export function CalendarApp(_props: CalendarAppProps) {
 	};
 
 	return (
-		<div className="flex h-full flex-col bg-gradient-to-b from-[#f2f2f5] to-[#e4e4ea] text-[#2a2a2e] select-text">
-			<div className="border-b border-[#d0d0d8]/80 bg-white/80 px-6 py-4">
+		<div className="module-shell module-workspace select-text">
+			<div className="module-header px-6 py-4">
 				<div className="flex items-center gap-3">
-					<div className="flex h-10 w-10 items-center justify-center border border-[#c8c8d4] bg-[#f8f8fa] text-[var(--accent-purple-dim)] terminal-bevel-sm">
+					<div className="module-icon-frame terminal-bevel-sm">
 						<AppIconRenderer icon="calendar" size={20} />
 					</div>
 					<div>
-						<h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[#1a1a1e]">
-							Calendar
-						</h2>
-						<p className="font-mono text-[10px] uppercase tracking-wider text-[var(--accent-gold-dim)]">
-							NAV-02
-						</p>
+						<h2 className="module-title">Calendar</h2>
+						<p className="module-subtitle">NAV-02</p>
 					</div>
 				</div>
 			</div>
 
-			<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 py-4 sm:px-6">
-				<div className="calendar-module-panel rounded-sm border border-[#d0d0d8] bg-white/75 p-3 terminal-bevel-sm sm:p-4">
+			<div className="module-body flex min-h-0 flex-col gap-4 overflow-hidden px-4 py-4 sm:px-6">
+				<div className="module-panel calendar-module-panel rounded-sm p-3 terminal-bevel-sm sm:p-4">
 					<div className="mb-3 flex items-center justify-between gap-2">
 						<button
 							type="button"
-							className="calendar-nav-btn terminal-bevel-sm border border-[#c8c8d4] p-1.5 text-[#3a3a42]"
+							className="calendar-nav-btn terminal-bevel-sm p-1.5"
 							onClick={() => shiftMonth(-1)}
 							aria-label="Previous month"
 						>
 							<ChevronLeft size={16} />
 						</button>
 						<div className="text-center">
-							<p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#1a1a1e]">
+							<p className="module-heading text-sm tracking-[0.12em]">
 								{MONTHS[viewMonthIndex]?.name} {viewYear}
 							</p>
 							<button
@@ -160,7 +156,7 @@ export function CalendarApp(_props: CalendarAppProps) {
 						</div>
 						<button
 							type="button"
-							className="calendar-nav-btn terminal-bevel-sm border border-[#c8c8d4] p-1.5 text-[#3a3a42]"
+							className="calendar-nav-btn terminal-bevel-sm p-1.5"
 							onClick={() => shiftMonth(1)}
 							aria-label="Next month"
 						>
@@ -170,10 +166,7 @@ export function CalendarApp(_props: CalendarAppProps) {
 
 					<div className="mb-1 grid grid-cols-7 gap-1">
 						{WEEKDAY_LABELS.map((label) => (
-							<div
-								key={label}
-								className="py-1 text-center font-mono text-[9px] uppercase tracking-wider text-[#9898a4]"
-							>
+							<div key={label} className="module-meta py-1 text-center">
 								{label}
 							</div>
 						))}
@@ -219,19 +212,15 @@ export function CalendarApp(_props: CalendarAppProps) {
 					</div>
 				</div>
 
-				<div className="calendar-action-panel mt-auto rounded-sm border border-[#d0d0d8] bg-white/80 p-4 terminal-bevel-sm">
+				<div className="module-panel-raised calendar-action-panel mt-auto rounded-sm p-4 terminal-bevel-sm">
 					{selectedCalendar ? (
 						<>
-							<p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#9898a4]">
-								Selected date
-							</p>
-							<p className="mt-1 text-sm font-semibold text-[#1a1a1e]">
-								{formatShipDateLong(selectedCalendar)}
-							</p>
-							<p className="mt-1 text-[11px] text-[#5a5a64]">
+							<p className="module-meta">Selected date</p>
+							<p className="module-title mt-1 text-sm">{formatShipDateLong(selectedCalendar)}</p>
+							<p className="module-copy-muted mt-1 text-[11px]">
 								Ship time now: {formatShipDateLong(calendarDate)} · {formatClock(shipTime)}
 							</p>
-							<p className="mt-2 text-[11px] leading-relaxed text-[#767680]">
+							<p className="module-copy-muted mt-2 text-[11px]">
 								Event markers and deadlines will appear on scheduled days in a future update.
 							</p>
 							<button
@@ -246,11 +235,11 @@ export function CalendarApp(_props: CalendarAppProps) {
 							</button>
 						</>
 					) : (
-						<p className="text-sm text-[#5a5a64]">Select a day to inspect or simulate ship time.</p>
+						<p className="module-copy text-sm">Select a day to inspect or simulate ship time.</p>
 					)}
 
 					{simulationNote && (
-						<p className="mt-3 border-t border-[#d0d0d8] pt-3 font-mono text-[10px] leading-relaxed text-[var(--accent-purple-dim)]">
+						<p className="module-meta mt-3 border-t border-[var(--module-border-soft)] pt-3 leading-relaxed text-[var(--accent-purple-dim)]">
 							{simulationNote}
 						</p>
 					)}
