@@ -155,3 +155,35 @@ export {
 	verifyPersonnelFoundation,
 	type PersonnelFoundationReport,
 } from './verifyFoundation';
+
+export {
+	ALLOCATION_STAT_MIN,
+	ALLOCATION_STAT_MAX,
+	ALLOCATION_STAT_DEFAULT,
+	CAPTAIN_ATTRIBUTE_POINT_POOL,
+	CAPTAIN_SKILL_POINT_POOL,
+	createDefaultAttributeAllocation,
+	createDefaultSkillAllocation,
+	getRemainingAllocationPoints,
+	canIncreaseAllocation,
+	canDecreaseAllocation,
+	isAllocationComplete,
+	increaseAttribute,
+	decreaseAttribute,
+	increaseSkill,
+	decreaseSkill,
+	randomiseAttributeAllocation,
+	randomiseSkillAllocation,
+} from './statAllocation';
+
+export {
+	SENIOR_STAFF_SELECTION_POSITIONS,
+	generateSeniorStaffCandidate,
+	createCaptainPersonnel,
+} from './seniorStaffGenerator';
+
+export {
+	generatePersonnelName,
+	pickGenderForSpecies,
+	formatGenderLabel,
+} from './names';

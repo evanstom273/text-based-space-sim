@@ -5,6 +5,11 @@ import {
 	type CreateProfileInput,
 	type ProfileStoreData,
 } from '../types/commandProfile';
+import {
+	createEmptyCrewRoster,
+	type CrewRosterState,
+} from '../domain/personnel/roster';
+import type { PersonnelRecord } from '../domain/personnel/personnel';
 import { randomAssignmentLocation } from './profileRandomizer';
 import {
 	formatDisplayCaptain,
@@ -21,10 +26,41 @@ function createEmptyStore(): ProfileStoreData {
 	};
 }
 
+function sanitizePersonnel(raw: unknown): PersonnelRecord | null {
+	if (!raw || typeof raw !== 'object') return null;
+	const person = raw as PersonnelRecord;
+	if (!person.id || !person.identity?.firstName || !person.speciesId || !person.rankId) {
+		return null;
+	}
+	return person;
+}
+
+function sanitizeCrew(raw: unknown): CrewRosterState | undefined {
+	if (!raw || typeof raw !== 'object') return undefined;
+	const crew = raw as Partial<CrewRosterState>;
+	if (!Array.isArray(crew.personnel)) return undefined;
+
+	const personnel = crew.personnel
+		.map((entry) => sanitizePersonnel(entry))
+		.filter((entry): entry is PersonnelRecord => entry !== null);
+
+	return {
+		schemaVersion: crew.schemaVersion ?? 1,
+		personnel,
+		captainPersonnelId: crew.captainPersonnelId ?? null,
+		seniorStaff: {
+			byPosition: crew.seniorStaff?.byPosition ?? {},
+			secondOfficerPersonnelId: crew.seniorStaff?.secondOfficerPersonnelId ?? null,
+		},
+	};
+}
+
 function sanitizeProfile(raw: Partial<CommandProfile>): CommandProfile | null {
 	if (!raw.id || !raw.captain?.name || !raw.vessel?.name || !raw.vessel?.registry) {
 		return null;
 	}
+
+	const crew = sanitizeCrew(raw.future?.crew);
 
 	return {
 		id: raw.id,
@@ -33,6 +69,7 @@ function sanitizeProfile(raw: Partial<CommandProfile>): CommandProfile | null {
 		updatedAt: raw.updatedAt ?? Date.now(),
 		captain: {
 			name: raw.captain.name,
+			personnelId: raw.captain.personnelId,
 		},
 		vessel: {
 			name: raw.vessel.name,
@@ -44,7 +81,10 @@ function sanitizeProfile(raw: Partial<CommandProfile>): CommandProfile | null {
 			...createDefaultSimulation(),
 			...raw.simulation,
 		},
-		future: raw.future ?? {},
+		future: {
+			...raw.future,
+			crew,
+		},
 	};
 }
 
@@ -82,9 +122,40 @@ export function saveProfileStore(store: ProfileStoreData): void {
 	);
 }
 
+function buildCrewRoster(input: CreateProfileInput): CrewRosterState {
+	const captain: PersonnelRecord = {
+		...input.captainPersonnel,
+		commandAppointmentId: null,
+	};
+
+	const seniorStaff: PersonnelRecord[] = input.seniorStaff.map((officer) => ({
+		...officer,
+		commandAppointmentId:
+			officer.id === input.secondOfficerPersonnelId ? 'second_officer' : null,
+	}));
+
+	const byPosition: CrewRosterState['seniorStaff']['byPosition'] = {};
+	for (const officer of seniorStaff) {
+		byPosition[officer.positionId] = officer.id;
+	}
+
+	const roster = createEmptyCrewRoster();
+	return {
+		...roster,
+		personnel: [captain, ...seniorStaff],
+		captainPersonnelId: captain.id,
+		seniorStaff: {
+			byPosition,
+			secondOfficerPersonnelId: input.secondOfficerPersonnelId,
+		},
+	};
+}
+
 export function createCommandProfile(input: CreateProfileInput): CommandProfile {
 	const now = Date.now();
 	const shipName = normalizeShipNameInput(input.shipName);
+	const captainName = formatDisplayCaptain(input.captainName);
+	const crew = buildCrewRoster(input);
 
 	return {
 		id: `profile-${now}-${Math.random().toString(36).slice(2, 8)}`,
@@ -92,7 +163,8 @@ export function createCommandProfile(input: CreateProfileInput): CommandProfile 
 		createdAt: now,
 		updatedAt: now,
 		captain: {
-			name: formatDisplayCaptain(input.captainName),
+			name: captainName,
+			personnelId: input.captainPersonnel.id,
 		},
 		vessel: {
 			name: shipName,
@@ -101,7 +173,9 @@ export function createCommandProfile(input: CreateProfileInput): CommandProfile 
 			alertStatus: 'Nominal',
 		},
 		simulation: createDefaultSimulation(),
-		future: {},
+		future: {
+			crew,
+		},
 	};
 }
 
