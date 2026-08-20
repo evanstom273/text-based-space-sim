@@ -27,26 +27,29 @@ export function Taskbar() {
 	return (
 		<div ref={taskbarRef} className="relative z-[500] shrink-0">
 			<StartMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
-			<footer className="terminal-chrome flex h-[52px] items-stretch border-t px-1 sm:px-2">
-				<div className="flex items-center gap-1 pr-1 sm:gap-2 sm:pr-2">
+			<footer className="terminal-dock flex h-[60px] items-stretch px-2 sm:px-3">
+				<div className="flex items-center pr-2 sm:pr-3">
 					<button
 						id="start-menu-button"
 						type="button"
-						className={`terminal-bevel-sm flex h-10 w-10 shrink-0 items-center justify-center border transition-colors sm:h-11 sm:w-11 ${
-							menuOpen
-								? 'border-[var(--accent-purple)] bg-[var(--accent-purple)]/15 text-[var(--accent-purple-bright)]'
-								: 'border-[var(--border-silver)] bg-[var(--surface-inset)] text-[var(--accent-gold)] hover:border-[var(--accent-purple)]/40'
+						className={`dock-home-btn terminal-bevel flex h-11 w-11 shrink-0 items-center justify-center transition-all sm:h-12 sm:w-12 ${
+							menuOpen ? 'dock-home-btn--active' : ''
 						}`}
 						onClick={() => setMenuOpen((open) => !open)}
 						aria-label="Terminal modules"
 					>
-						<ShipInsignia size={20} />
+						<ShipInsignia size={22} className={menuOpen ? 'text-[var(--accent-purple-bright)]' : ''} />
 					</button>
 				</div>
 
-				<div className="terminal-divider my-2 hidden sm:block" />
+				<div className="terminal-divider my-3 hidden sm:block" />
 
-				<div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 no-scrollbar">
+				<div className="terminal-chrome-inset terminal-bevel-sm my-2 flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto border px-2 no-scrollbar">
+					{windows.length === 0 && (
+						<span className="px-2 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--text-silver-dim)]">
+							No active modules
+						</span>
+					)}
 					{windows.map((win) => {
 						const isActive = activeWindowId === win.id && win.state !== 'minimised';
 						const isMinimised = win.state === 'minimised';
@@ -55,39 +58,53 @@ export function Taskbar() {
 							<button
 								key={win.id}
 								type="button"
-								className={`terminal-bevel-sm flex h-9 max-w-[180px] shrink-0 items-center gap-2 border px-2.5 text-left transition-colors sm:h-10 ${
-									isActive
-										? 'border-[var(--accent-purple)] bg-[var(--accent-purple)]/12 text-white'
-										: isMinimised
-											? 'border-[var(--border-silver)] bg-transparent text-[var(--text-silver-dim)] hover:border-[var(--accent-purple)]/30'
-											: 'border-[var(--border-silver)] bg-[var(--surface-inset)]/50 text-[var(--text-silver)] hover:border-[var(--accent-purple)]/35'
-								}`}
+								className={`dock-tab terminal-bevel-sm flex h-10 max-w-[200px] shrink-0 items-center gap-2 px-3 text-left transition-all ${
+									isActive ? 'dock-tab--active' : ''
+								} ${isMinimised ? 'opacity-55' : ''}`}
 								onClick={() => toggleMinimizeWindow(win.id)}
 							>
 								<AppIconRenderer
 									icon={win.icon}
-									size={14}
-									className={`shrink-0 ${isActive ? 'text-[var(--accent-purple-bright)]' : 'text-[var(--text-silver-dim)]'}`}
+									size={15}
+									className={`shrink-0 ${
+										isActive ? 'text-[var(--accent-purple-bright)]' : 'text-[var(--text-silver)]'
+									}`}
 								/>
-								<span className="truncate text-[10px] font-medium uppercase tracking-[0.1em]">
+								<span
+									className={`truncate text-[10px] font-semibold uppercase tracking-[0.12em] ${
+										isActive ? 'text-white' : 'text-[var(--text-silver-dim)]'
+									}`}
+								>
 									{win.title}
 								</span>
-								{isActive && (
-									<span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-purple-bright)] shadow-[0_0_6px_var(--accent-purple-glow)]" />
-								)}
+								<span
+									className={`ml-auto h-2 w-2 shrink-0 rounded-full ${
+										isActive
+											? 'bg-[var(--accent-purple-bright)] shadow-[0_0_8px_var(--accent-purple-glow)]'
+											: 'bg-[var(--text-silver-dim)]/40'
+									}`}
+								/>
 							</button>
 						);
 					})}
 				</div>
 
-				<div className="terminal-divider my-2 hidden md:block" />
+				<div className="terminal-divider-gold my-3 hidden md:block" />
 
-				<div className="hidden items-center gap-2 px-2 text-[var(--text-silver-dim)] md:flex">
-					<button type="button" className="p-1 hover:text-[var(--text-silver)]" aria-label="Notifications">
-						<Bell size={14} strokeWidth={1.5} />
+				<div className="hidden items-center gap-2 px-2 text-[var(--text-silver)] md:flex">
+					<button
+						type="button"
+						className="rounded p-1.5 transition-colors hover:bg-[var(--accent-purple-soft)] hover:text-[var(--accent-purple-bright)]"
+						aria-label="Notifications"
+					>
+						<Bell size={15} strokeWidth={1.5} />
 					</button>
-					<button type="button" className="p-1 hover:text-[var(--text-silver)]" aria-label="Audio">
-						<Volume2 size={14} strokeWidth={1.5} />
+					<button
+						type="button"
+						className="rounded p-1.5 transition-colors hover:bg-[var(--accent-purple-soft)] hover:text-[var(--accent-purple-bright)]"
+						aria-label="Audio"
+					>
+						<Volume2 size={15} strokeWidth={1.5} />
 					</button>
 				</div>
 

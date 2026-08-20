@@ -6,8 +6,8 @@ import type { DesktopIconItem } from '../../types';
 import { TASKBAR_HEIGHT } from '../../types';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 
-const CELL_WIDTH = 88;
-const CELL_HEIGHT = 92;
+const CELL_WIDTH = 92;
+const CELL_HEIGHT = 98;
 const GRID_PADDING = 28;
 const DRAG_THRESHOLD = 6;
 const DOUBLE_TAP_MS = 350;
@@ -139,14 +139,36 @@ export function DesktopIconGrid() {
 		};
 	}, [isMobile, selectedId]);
 
+	const renderIconContent = (icon: DesktopIconItem, isSelected: boolean) => (
+		<>
+			<div
+				className={`icon-module-frame icon-module-frame--hover terminal-bevel-sm ${
+					isSelected ? 'icon-module-frame--selected' : ''
+				}`}
+			>
+				<AppIconRenderer icon={icon.icon} size={24} />
+			</div>
+			<span
+				className={`max-w-full truncate text-center text-[10px] font-semibold uppercase tracking-[0.14em] icon-module-label ${
+					isSelected ? 'icon-module-label--selected' : ''
+				}`}
+			>
+				{icon.title}
+			</span>
+			<span className="icon-module-code font-mono text-[8px] uppercase tracking-[0.14em]">
+				{icon.badgeCode}
+			</span>
+		</>
+	);
+
 	return (
 		<div
 			ref={gridRef}
-			className={`absolute inset-x-0 top-0 z-10 overflow-auto no-scrollbar ${isMobile ? 'bottom-14 px-3 pt-3' : 'bottom-14 px-4 pt-5'}`}
+			className={`absolute inset-x-0 top-0 z-10 overflow-auto no-scrollbar ${isMobile ? 'bottom-16 px-3 pt-3' : 'bottom-16 px-4 pt-4'}`}
 			style={{ paddingBottom: TASKBAR_HEIGHT }}
 			onClick={() => setSelectedId(null)}
 		>
-			<div className={isMobile ? 'grid grid-cols-3 gap-3' : 'relative min-h-full max-w-[320px]'}>
+			<div className={isMobile ? 'grid grid-cols-3 gap-4' : 'relative min-h-full max-w-[300px]'}>
 				{icons.map((icon) => {
 					const isSelected = selectedId === icon.id;
 					const isDragging = draggingId === icon.id;
@@ -156,15 +178,10 @@ export function DesktopIconGrid() {
 							<button
 								key={icon.id}
 								type="button"
-								className="group flex flex-col items-center gap-2 p-2 text-center transition-transform active:scale-95"
+								className="group flex flex-col items-center gap-1.5 p-2 text-center transition-transform active:scale-95"
 								onClick={() => handleOpen(icon.appId)}
 							>
-								<div className="icon-module-frame icon-module-frame--hover terminal-bevel-sm group-active:border-[var(--accent-purple)]">
-									<AppIconRenderer icon={icon.icon} size={22} />
-								</div>
-								<span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--text-silver)] icon-text-shadow">
-									{icon.title}
-								</span>
+								{renderIconContent(icon, false)}
 							</button>
 						);
 					}
@@ -173,8 +190,8 @@ export function DesktopIconGrid() {
 						<button
 							key={icon.id}
 							type="button"
-							className={`group absolute flex w-[76px] flex-col items-center gap-1.5 p-1 transition-opacity ${
-								isDragging ? 'z-50 opacity-70' : ''
+							className={`group absolute flex w-[80px] flex-col items-center gap-1 p-1 transition-opacity ${
+								isDragging ? 'z-50 opacity-75' : ''
 							}`}
 							style={{
 								left: GRID_PADDING + icon.gridCol * CELL_WIDTH,
@@ -189,16 +206,7 @@ export function DesktopIconGrid() {
 								handleIconPointerDown(icon, event.clientX, event.clientY);
 							}}
 						>
-							<div
-								className={`icon-module-frame icon-module-frame--hover terminal-bevel-sm ${
-									isSelected ? 'icon-module-frame--selected' : ''
-								}`}
-							>
-								<AppIconRenderer icon={icon.icon} size={22} />
-							</div>
-							<span className="max-w-full truncate text-center text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--text-silver)] icon-text-shadow">
-								{icon.title}
-							</span>
+							{renderIconContent(icon, isSelected)}
 						</button>
 					);
 				})}
