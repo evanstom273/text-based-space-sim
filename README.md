@@ -29,6 +29,21 @@ npm run dev
 npm run build
 ```
 
+## GitHub Pages
+
+The site deploys automatically when changes land on `main` via [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+
+After the first successful deploy, enable **GitHub Pages** in the repository settings with source **GitHub Actions**. The live URL will be:
+
+https://evanstom273.github.io/text-based-space-sim/
+
+To verify a Pages build locally:
+
+```bash
+GITHUB_PAGES=true npm run build
+npm run preview
+```
+
 ## Stack
 
 React 19 · TypeScript · Vite · Tailwind CSS v4 · lucide-react
