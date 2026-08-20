@@ -16,6 +16,7 @@ const BOOT_LINES = [
 const LINE_DELAY_MS = 280;
 const FINAL_HOLD_MS = 600;
 const FAST_BOOT_MS = 400;
+const BOOT_EXIT_MS = 550;
 
 interface BootSequenceProps {
 	onComplete: () => void;
@@ -26,23 +27,23 @@ export function BootSequence({ onComplete }: BootSequenceProps) {
 	const [visibleLines, setVisibleLines] = useState(0);
 	const [logoVisible, setLogoVisible] = useState(false);
 	const [scanActive, setScanActive] = useState(false);
-	const [skipping, setSkipping] = useState(false);
+	const [exiting, setExiting] = useState(false);
 	const completedRef = useRef(false);
 
 	const finish = useCallback(() => {
 		if (completedRef.current) return;
 		completedRef.current = true;
-		onComplete();
+		setExiting(true);
+		window.setTimeout(onComplete, BOOT_EXIT_MS);
 	}, [onComplete]);
 
 	const skipBoot = useCallback(() => {
 		if (completedRef.current) return;
-		setSkipping(true);
 		setLogoVisible(true);
 		setScanActive(true);
 		setVisibleLines(BOOT_LINES.length);
-		window.setTimeout(finish, skipping ? 0 : 180);
-	}, [finish, skipping]);
+		window.setTimeout(finish, 120);
+	}, [finish]);
 
 	useEffect(() => {
 		if (fastBoot) {
@@ -87,7 +88,7 @@ export function BootSequence({ onComplete }: BootSequenceProps) {
 
 	return (
 		<div
-			className="game-screen boot-screen"
+			className={`game-screen boot-screen ${exiting ? 'boot-screen--exit' : ''}`}
 			onClick={skipBoot}
 			onKeyDown={(event) => {
 				if (event.key === 'Enter' || event.key === ' ') skipBoot();

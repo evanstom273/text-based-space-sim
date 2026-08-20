@@ -13,6 +13,7 @@ import type {
 	GamePhase,
 } from '../types/commandProfile';
 import type { ShipStateSnapshot } from '../utils/shipPersistence';
+import { SCENE_FADE_MS } from '../hooks/useSceneTransition';
 import {
 	createCommandProfile,
 	deleteProfileFromStore,
@@ -109,9 +110,11 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 
 	const completeAuth = useCallback(() => {
 		if (authMode === 'exit') {
-			setActiveProfile(null);
-			setAuthMode(null);
 			setPhase('profiles');
+			window.setTimeout(() => {
+				setActiveProfile(null);
+				setAuthMode(null);
+			}, SCENE_FADE_MS);
 			return;
 		}
 

@@ -1008,6 +1008,95 @@ body {
 
 /* ── Game flow screens (boot, profiles, auth) ── */
 
+.game-scene-root {
+	position: relative;
+	width: 100vw;
+	height: 100dvh;
+	overflow: hidden;
+	background: #080808;
+}
+
+.game-scene-layer {
+	position: absolute;
+	inset: 0;
+	transition:
+		opacity 650ms ease,
+		transform 650ms ease,
+		filter 650ms ease;
+	will-change: opacity, transform, filter;
+}
+
+.game-scene-layer--leave {
+	z-index: 4;
+	opacity: 0;
+	transform: scale(0.985) translateY(6px);
+	filter: blur(3px);
+	pointer-events: none;
+}
+
+.game-scene-layer--enter {
+	z-index: 5;
+	opacity: 0;
+	transform: scale(1.015) translateY(-8px);
+	animation: scene-layer-enter 650ms ease forwards;
+}
+
+.game-scene-layer--visible {
+	z-index: 3;
+	opacity: 1;
+	transform: none;
+	filter: none;
+}
+
+.game-scene-layer--under {
+	z-index: 1;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.game-scene-layer--under-visible {
+	z-index: 1;
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.game-scene-layer--under-dim {
+	z-index: 1;
+	opacity: 1;
+	filter: brightness(0.42) saturate(0.8);
+	pointer-events: none;
+}
+
+.game-scene-layer--auth.game-scene-layer--enter,
+.game-scene-layer--auth.game-scene-layer--visible,
+.game-scene-layer--auth.game-scene-layer--leave {
+	z-index: 6;
+}
+
+@keyframes scene-layer-enter {
+	from {
+		opacity: 0;
+		transform: scale(1.015) translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes scene-fade-out {
+	from {
+		opacity: 1;
+		transform: none;
+		filter: none;
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.985) translateY(8px);
+		filter: blur(4px);
+	}
+}
+
 .game-screen {
 	position: relative;
 	display: flex;
@@ -1095,6 +1184,11 @@ body {
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
+}
+
+.boot-screen--exit {
+	animation: scene-fade-out 550ms ease forwards;
+	pointer-events: none;
 }
 
 .boot-screen-vignette {
@@ -1256,6 +1350,27 @@ body {
 	min-height: 0;
 	overflow-y: auto;
 	padding: 0.5rem 0.25rem 1rem;
+}
+
+.game-scene-layer--enter .profile-screen-header,
+.game-scene-layer--enter .create-screen-header {
+	animation: scene-content-rise 700ms ease 100ms both;
+}
+
+.game-scene-layer--enter .profile-screen-body,
+.game-scene-layer--enter .create-screen-body {
+	animation: scene-content-rise 700ms ease 200ms both;
+}
+
+@keyframes scene-content-rise {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
 }
 
 .profile-screen-prompt {
@@ -1552,11 +1667,19 @@ body {
 	inset: 0;
 	background: #080808;
 	opacity: 1;
-	transition: opacity 0.8s ease;
+	transition: opacity 650ms ease;
 }
 
-.auth-overlay--active {
-	opacity: 0.35;
+.auth-overlay--base {
+	background: rgba(8, 8, 8, 0.78);
+}
+
+.auth-screen--scan .auth-overlay--base {
+	opacity: 0.42;
+}
+
+.auth-screen--exit .auth-overlay--base {
+	opacity: 0;
 }
 
 .auth-content {
@@ -1566,6 +1689,20 @@ body {
 	flex-direction: column;
 	align-items: center;
 	gap: 1.5rem;
+	transition:
+		opacity 650ms ease,
+		transform 650ms ease,
+		filter 650ms ease;
+}
+
+.auth-content--exit {
+	opacity: 0;
+	transform: scale(0.985) translateY(10px);
+	filter: blur(4px);
+}
+
+.auth-screen--exit {
+	pointer-events: none;
 }
 
 .auth-insignia {
@@ -1728,10 +1865,16 @@ body {
 	.boot-scanline,
 	.auth-insignia--pulse,
 	.auth-scanline,
-	.auth-reveal-bar--status,
-	.auth-reveal-workspace,
-	.auth-reveal-bar--taskbar {
+	.game-scene-layer--enter,
+	.boot-screen--exit {
 		animation: none !important;
+	}
+
+	.game-scene-layer--enter,
+	.game-scene-layer--leave {
+		opacity: 1 !important;
+		transform: none !important;
+		filter: none !important;
 	}
 
 	.nav-travel-dot {
