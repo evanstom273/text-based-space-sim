@@ -1,10 +1,13 @@
 import type { CalendarEventMarker, TimeSpeedMultiplier } from '../utils/shipCalendar';
 import type { ShipStateSnapshot } from '../utils/shipPersistence';
+import type { CrewRosterState } from '../domain/personnel/roster';
 
 export const COMMAND_PROFILE_VERSION = 1 as const;
 
 export interface CommandProfileCaptain {
 	name: string;
+	/** Optional link to full PersonnelRecord once Captain uses the shared stat model. */
+	personnelId?: string;
 }
 
 export interface CommandProfileVessel {
@@ -18,7 +21,8 @@ export interface CommandProfileSimulation extends ShipStateSnapshot {}
 
 export interface CommandProfileFutureState {
 	calendarEvents?: CalendarEventMarker[];
-	crew?: Record<string, unknown>;
+	/** Per-save crew roster (Planetary Union personnel). Isolated per Command Profile. */
+	crew?: CrewRosterState;
 	missions?: Record<string, unknown>;
 	shipSystems?: Record<string, unknown>;
 	communications?: Record<string, unknown>;
