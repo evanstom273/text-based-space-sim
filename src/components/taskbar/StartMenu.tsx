@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { LogOut, Search } from 'lucide-react';
 import { APP_LIST } from '../../config/apps.config';
+import { useGameSession } from '../../context/GameSessionContext';
 import { useWindowManager } from '../../context/WindowManagerContext';
+import { useRelinquishCommand } from '../../hooks/useRelinquishCommand';
 import type { AppCategory, AppDefinition } from '../../types';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 import { ShipInsignia } from '../common/ShipInsignia';
+import { formatDisplayShipName } from '../../utils/profileRandomizer';
 
 interface StartMenuProps {
 	isOpen: boolean;
@@ -22,6 +25,9 @@ const CATEGORY_ORDER: AppCategory[] = [
 
 export function StartMenu({ isOpen, onClose }: StartMenuProps) {
 	const { openWindow, windows, activeWindowId, toggleMinimizeWindow } = useWindowManager();
+	const { activeProfile } = useGameSession();
+	const relinquishCommand = useRelinquishCommand();
+	const searchInputRef = useRef<HTMLInputElement>(null);
 	const [query, setQuery] = useState('');
 
 	const filteredApps = useMemo(() => {
@@ -63,6 +69,17 @@ export function StartMenu({ isOpen, onClose }: StartMenuProps) {
 		onClose();
 	};
 
+	const handleSignOut = () => {
+		searchInputRef.current?.blur();
+		setQuery('');
+		onClose();
+		relinquishCommand();
+	};
+
+	const handleSearchAreaClick = () => {
+		searchInputRef.current?.focus();
+	};
+
 	return (
 		<div className="start-menu-panel absolute bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-2 z-[1000] w-[min(440px,calc(100vw-16px))] animate-fadeIn overflow-hidden border border-[rgba(176,120,240,0.35)] bg-[#242424] shadow-2xl shadow-black/70 terminal-bevel">
 			<div className="border-b border-[var(--border-silver)] bg-gradient-to-r from-[#2a2a2a] to-[#222222] px-4 py-3">
@@ -79,15 +96,23 @@ export function StartMenu({ isOpen, onClose }: StartMenuProps) {
 				</div>
 			</div>
 			<div className="border-b border-[var(--border-silver)] px-3 py-2">
-				<div className="terminal-chrome-inset flex items-center gap-2 border px-3 py-1.5 terminal-bevel-sm">
-					<Search size={14} className="text-[var(--text-silver-dim)]" />
+				<div
+					className="terminal-chrome-inset flex items-center gap-2 border px-3 py-1.5 terminal-bevel-sm"
+					onClick={handleSearchAreaClick}
+					role="presentation"
+				>
+					<Search size={14} className="shrink-0 text-[var(--text-silver-dim)]" />
 					<input
+						ref={searchInputRef}
 						type="search"
 						value={query}
 						onChange={(event) => setQuery(event.target.value)}
 						placeholder="Search modules..."
 						className="w-full bg-transparent text-sm text-[var(--text-silver)] outline-none placeholder:text-[var(--text-silver-dim)]"
-						autoFocus
+						autoComplete="off"
+						autoCorrect="off"
+						spellCheck={false}
+						enterKeyHint="search"
 					/>
 				</div>
 			</div>
@@ -182,6 +207,31 @@ export function StartMenu({ isOpen, onClose }: StartMenuProps) {
 					<p className="px-3 py-6 text-center text-sm text-[var(--text-silver-dim)]">No modules found</p>
 				)}
 			</div>
+
+			{activeProfile ? (
+				<div className="border-t border-[var(--border-silver)] bg-gradient-to-r from-[#1e1e1e] to-[#242424] px-3 py-2">
+					<div className="mb-2 px-1">
+						<p className="truncate font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--text-silver-dim)]">
+							{activeProfile.captain.name} · {formatDisplayShipName(activeProfile.vessel.name)}
+						</p>
+					</div>
+					<button
+						type="button"
+						className="start-menu-signout terminal-bevel-sm flex w-full items-center gap-2.5 border px-3 py-2.5 text-left transition-colors"
+						onClick={handleSignOut}
+					>
+						<LogOut size={15} strokeWidth={1.5} className="shrink-0 text-[var(--accent-gold)]" />
+						<div className="min-w-0">
+							<span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-silver)]">
+								Relinquish Command
+							</span>
+							<span className="block truncate text-[10px] text-[var(--text-silver-dim)]">
+								Return to command profile selection
+							</span>
+						</div>
+					</button>
+				</div>
+			) : null}
 		</div>
 	);
 }

@@ -37,7 +37,15 @@ export function Taskbar() {
 						className={`dock-home-btn terminal-bevel flex h-11 w-11 shrink-0 items-center justify-center transition-all sm:h-12 sm:w-12 ${
 							menuOpen ? 'dock-home-btn--active' : ''
 						}`}
-						onClick={() => setMenuOpen((open) => !open)}
+						onClick={() => {
+							setMenuOpen((open) => {
+								const next = !open;
+								if (next && document.activeElement instanceof HTMLElement) {
+									document.activeElement.blur();
+								}
+								return next;
+							});
+						}}
 						aria-label="Terminal modules"
 						aria-expanded={menuOpen}
 					>

@@ -778,6 +778,20 @@ body {
 	}
 }
 
+.start-menu-signout {
+	border-color: rgba(240, 240, 244, 0.12);
+	background: linear-gradient(180deg, #262626 0%, #1a1a1a 100%);
+}
+
+.start-menu-signout:hover {
+	border-color: rgba(212, 180, 90, 0.45);
+	background: linear-gradient(180deg, rgba(212, 180, 90, 0.1) 0%, rgba(131, 68, 201, 0.08) 100%);
+}
+
+.start-menu-signout:active {
+	transform: translateY(1px);
+}
+
 .settings-slider {
 	appearance: none;
 	height: 6px;
