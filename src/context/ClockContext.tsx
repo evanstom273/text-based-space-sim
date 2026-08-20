@@ -23,10 +23,16 @@ import {
 	savePersistedShipState,
 	type ShipStateSnapshot,
 } from '../utils/shipPersistence';
+import {
+	simulateChronoToTarget,
+	type ChronoSimulationResult,
+} from '../utils/chronoSimulation';
 
 interface ClockContextValue {
 	shipTime: Date;
 	calendarDate: ShipCalendarDate;
+	absoluteDay: number;
+	minutesInDay: number;
 	minutesPerTick: number;
 	tickIntervalSeconds: number;
 	setTickIntervalSeconds: (seconds: number) => void;
@@ -38,6 +44,7 @@ interface ClockContextValue {
 	dayEndPending: boolean;
 	acknowledgeDayEnd: () => void;
 	persistenceReady: boolean;
+	simulateTo: (targetAbsoluteDay: number, targetMinutesInDay?: number) => ChronoSimulationResult;
 }
 
 const ClockContext = createContext<ClockContextValue | undefined>(undefined);
@@ -119,6 +126,23 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 		setPaused(false);
 	}, []);
 
+	const simulateTo = useCallback(
+		(targetAbsoluteDay: number, targetMinutesInDay = 0): ChronoSimulationResult => {
+			const result = simulateChronoToTarget(
+				{ absoluteDay, minutesInDay },
+				{ absoluteDay: targetAbsoluteDay, minutesInDay: targetMinutesInDay },
+			);
+
+			setAbsoluteDay(result.final.absoluteDay);
+			setMinutesInDay(result.final.minutesInDay);
+			setDayEndPending(false);
+			setPaused(false);
+
+			return result;
+		},
+		[absoluteDay, minutesInDay],
+	);
+
 	const calendarDate = useMemo(() => absoluteDayToCalendar(absoluteDay), [absoluteDay]);
 	const shipTime = useMemo(
 		() => calendarToShipDate(absoluteDay, minutesInDay),
@@ -129,6 +153,8 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 		() => ({
 			shipTime,
 			calendarDate,
+			absoluteDay,
+			minutesInDay,
 			minutesPerTick: MINUTES_PER_CHRONO_TICK,
 			tickIntervalSeconds,
 			setTickIntervalSeconds,
@@ -140,10 +166,13 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 			dayEndPending,
 			acknowledgeDayEnd,
 			persistenceReady,
+			simulateTo,
 		}),
 		[
 			shipTime,
 			calendarDate,
+			absoluteDay,
+			minutesInDay,
 			tickIntervalSeconds,
 			setTickIntervalSeconds,
 			speedMultiplier,
@@ -152,6 +181,7 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 			dayEndPending,
 			acknowledgeDayEnd,
 			persistenceReady,
+			simulateTo,
 		],
 	);
 
