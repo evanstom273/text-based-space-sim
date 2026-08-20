@@ -268,10 +268,10 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 	return (
 		<div
 			ref={frameRef}
-			className={`flex flex-col overflow-hidden rounded-lg border bg-white ${
+			className={`flex flex-col overflow-hidden border bg-[#ececf0] terminal-bevel ${
 				win.isFocused
-					? 'window-shadow-focused border-[#3d8fd4]/60'
-					: 'window-shadow border-slate-200/80'
+					? 'window-shadow-focused border-[var(--accent-purple)]'
+					: 'window-shadow border-[var(--border-silver-bright)]'
 			} ${isMobile ? 'rounded-none border-x-0' : ''}`}
 			style={getFrameStyle()}
 			onPointerDown={() => focusWindow(win.id)}
@@ -279,62 +279,75 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 			<div
 				className={`flex h-9 shrink-0 items-center justify-between border-b px-2 ${
 					win.isFocused
-						? 'border-[#3d8fd4]/20 bg-gradient-to-r from-[#e8f4fc] to-[#f0f7fb]'
-						: 'border-slate-200 bg-slate-50'
+						? 'border-[var(--accent-purple)]/30 bg-gradient-to-r from-[#2a2a2a] via-[#252525] to-[#1f1f1f]'
+						: 'border-[var(--border-silver)] bg-gradient-to-r from-[#242424] to-[#1c1c1c]'
 				} ${canManipulate ? 'cursor-grab active:cursor-grabbing' : ''}`}
 				onPointerDown={handleTitlePointerDown}
 				onPointerMove={handleTitlePointerMove}
 				onPointerUp={handleTitlePointerUp}
 			>
 				<div className="flex min-w-0 items-center gap-2">
-					<div className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[#1a5f8a]">
-						<AppIconRenderer icon={win.icon} size={16} />
+					<div
+						className={`flex h-6 w-6 shrink-0 items-center justify-center terminal-bevel-sm border ${
+							win.isFocused
+								? 'border-[var(--accent-purple)]/50 text-[var(--accent-purple-bright)]'
+								: 'border-[var(--border-silver)] text-[var(--text-silver-dim)]'
+						}`}
+					>
+						<AppIconRenderer icon={win.icon} size={14} />
 					</div>
-					<span className="truncate text-xs font-semibold tracking-wide text-slate-700">
+					<span
+						className={`truncate text-[10px] font-semibold uppercase tracking-[0.14em] ${
+							win.isFocused ? 'text-white' : 'text-[var(--text-silver)]'
+						}`}
+					>
 						{win.title}
 					</span>
+					{win.isFocused && (
+						<span className="hidden h-1 w-1 shrink-0 rounded-full bg-[var(--accent-gold)] sm:inline-block" />
+					)}
 				</div>
-				<div className="flex shrink-0 items-center">
+				<div className="flex shrink-0 items-center gap-0.5">
 					{!isMobile && (
 						<button
 							type="button"
-							className="flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-slate-200/60 hover:text-slate-700"
+							className="flex h-7 w-7 items-center justify-center border border-transparent text-[var(--text-silver-dim)] hover:border-[var(--border-silver)] hover:text-white terminal-bevel-sm"
 							onClick={(event) => {
 								event.stopPropagation();
 								minimizeWindow(win.id);
 							}}
 							aria-label="Minimise"
 						>
-							<Minus size={14} />
+							<Minus size={13} />
 						</button>
 					)}
 					{!isMobile && (
 						<button
 							type="button"
-							className="flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-slate-200/60 hover:text-slate-700"
+							className="flex h-7 w-7 items-center justify-center border border-transparent text-[var(--text-silver-dim)] hover:border-[var(--border-silver)] hover:text-white terminal-bevel-sm"
 							onClick={(event) => {
 								event.stopPropagation();
 								handleMaximizeClick();
 							}}
 							aria-label={isMaximised || isSnapped ? 'Restore' : 'Maximise'}
 						>
-							{isMaximised || isSnapped ? <Copy size={12} /> : <Square size={12} />}
+							{isMaximised || isSnapped ? <Copy size={11} /> : <Square size={11} />}
 						</button>
 					)}
 					<button
 						type="button"
-						className="flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-red-100 hover:text-red-600"
+						className="flex h-7 w-7 items-center justify-center border border-transparent text-[var(--text-silver-dim)] hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 terminal-bevel-sm"
 						onClick={(event) => {
 							event.stopPropagation();
 							closeWindow(win.id);
 						}}
 						aria-label="Close"
 					>
-						<X size={14} />
+						<X size={13} />
 					</button>
 				</div>
 			</div>
-			<div className="min-h-0 flex-1 overflow-hidden">
+			<div className="min-h-0 flex-1 overflow-hidden bg-[#ececf0]">
 				{AppComponent && <AppComponent windowId={win.id} appId={win.appId} />}
 			</div>
 			{renderResizeHandle('n', 'top-0 left-2 right-2 h-1 cursor-n-resize')}

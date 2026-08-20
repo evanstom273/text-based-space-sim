@@ -4,6 +4,7 @@ import { APP_LIST } from '../../config/apps.config';
 import { useWindowManager } from '../../context/WindowManagerContext';
 import type { AppCategory, AppDefinition } from '../../types';
 import { AppIconRenderer } from '../common/AppIconRenderer';
+import { ShipInsignia } from '../common/ShipInsignia';
 
 interface StartMenuProps {
 	isOpen: boolean;
@@ -57,22 +58,29 @@ export function StartMenu({ isOpen, onClose }: StartMenuProps) {
 	};
 
 	return (
-		<div className="absolute bottom-12 left-2 z-[1000] w-[min(420px,calc(100vw-16px))] animate-fadeIn overflow-hidden rounded-xl border border-[#3d8fd4]/30 bg-[#f8fbfd] shadow-2xl shadow-[#0a2840]/40">
-			<div className="border-b border-slate-200/80 bg-gradient-to-r from-[#e8f4fc] to-white px-4 py-3">
-				<p className="text-xs font-semibold uppercase tracking-widest text-[#1a5f8a]">
-					Union Terminal
-				</p>
-				<p className="text-[11px] text-slate-500">Select a shipboard module</p>
+		<div className="absolute bottom-[56px] left-2 z-[1000] w-[min(440px,calc(100vw-16px))] animate-fadeIn overflow-hidden border border-[var(--border-silver-bright)] bg-[#242424] shadow-2xl shadow-black/60 terminal-bevel">
+			<div className="border-b border-[var(--border-silver)] bg-gradient-to-r from-[#2a2a2a] to-[#222222] px-4 py-3">
+				<div className="flex items-center gap-2.5">
+					<div className="text-[var(--accent-gold)]">
+						<ShipInsignia size={18} />
+					</div>
+					<div>
+						<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-purple-bright)]">
+							Module Registry
+						</p>
+						<p className="text-[11px] text-[var(--text-silver-dim)]">Select shipboard system</p>
+					</div>
+				</div>
 			</div>
-			<div className="border-b border-slate-200/80 px-3 py-2">
-				<div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5">
-					<Search size={14} className="text-slate-400" />
+			<div className="border-b border-[var(--border-silver)] px-3 py-2">
+				<div className="terminal-chrome-inset flex items-center gap-2 border px-3 py-1.5 terminal-bevel-sm">
+					<Search size={14} className="text-[var(--text-silver-dim)]" />
 					<input
 						type="search"
 						value={query}
 						onChange={(event) => setQuery(event.target.value)}
 						placeholder="Search modules..."
-						className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+						className="w-full bg-transparent text-sm text-[var(--text-silver)] outline-none placeholder:text-[var(--text-silver-dim)]"
 						autoFocus
 					/>
 				</div>
@@ -84,25 +92,29 @@ export function StartMenu({ isOpen, onClose }: StartMenuProps) {
 
 					return (
 						<div key={category} className="mb-2">
-							<p className="px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-slate-400">
+							<p className="px-2 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-[var(--text-silver-dim)]">
 								{category}
 							</p>
 							{apps.map((app) => (
 								<button
 									key={app.id}
 									type="button"
-									className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-[#e8f4fc]"
+									className="flex w-full items-center gap-3 border border-transparent px-2 py-2 text-left transition-colors hover:border-[var(--accent-purple)]/25 hover:bg-[var(--accent-purple)]/8 terminal-bevel-sm"
 									onClick={() => handleOpenApp(app.id)}
 								>
-									<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1a5f8a]/10 text-[#1a5f8a]">
-										<AppIconRenderer icon={app.icon} size={18} />
+									<div className="icon-module-frame terminal-bevel-sm h-9 w-9 shrink-0 text-[var(--text-silver)]">
+										<AppIconRenderer icon={app.icon} size={16} />
 									</div>
 									<div className="min-w-0 flex-1">
 										<div className="flex items-center gap-2">
-											<span className="text-sm font-medium text-slate-800">{app.name}</span>
-											<span className="font-mono text-[9px] text-slate-400">{app.badgeCode}</span>
+											<span className="text-sm font-medium uppercase tracking-wide text-white">
+												{app.name}
+											</span>
+											<span className="font-mono text-[9px] text-[var(--accent-gold)]">
+												{app.badgeCode}
+											</span>
 										</div>
-										<p className="truncate text-[11px] text-slate-500">
+										<p className="truncate text-[11px] text-[var(--text-silver-dim)]">
 											{app.subtitle ?? app.description}
 										</p>
 									</div>
@@ -112,7 +124,7 @@ export function StartMenu({ isOpen, onClose }: StartMenuProps) {
 					);
 				})}
 				{filteredApps.length === 0 && (
-					<p className="px-3 py-6 text-center text-sm text-slate-400">No modules found</p>
+					<p className="px-3 py-6 text-center text-sm text-[var(--text-silver-dim)]">No modules found</p>
 				)}
 			</div>
 		</div>

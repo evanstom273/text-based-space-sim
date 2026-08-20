@@ -12,10 +12,13 @@ export function SnapOverlay({ snapTarget }: SnapOverlayProps) {
 		bottom: TASKBAR_HEIGHT,
 	};
 
+	const overlayClass =
+		'pointer-events-none fixed z-[999] animate-fadeIn border border-[var(--accent-purple)]/50 bg-[var(--accent-purple)]/8 backdrop-blur-[1px] terminal-bevel';
+
 	if (snapTarget === 'left') {
 		return (
 			<div
-				className="pointer-events-none fixed left-1 z-[999] w-[calc(50vw-6px)] rounded-lg border-2 border-[#3d8fd4]/50 bg-[#3d8fd4]/10 backdrop-blur-[1px] animate-fadeIn"
+				className={`${overlayClass} left-1 w-[calc(50vw-6px)]`}
 				style={baseStyle}
 			/>
 		);
@@ -24,7 +27,7 @@ export function SnapOverlay({ snapTarget }: SnapOverlayProps) {
 	if (snapTarget === 'right') {
 		return (
 			<div
-				className="pointer-events-none fixed right-1 z-[999] w-[calc(50vw-6px)] rounded-lg border-2 border-[#3d8fd4]/50 bg-[#3d8fd4]/10 backdrop-blur-[1px] animate-fadeIn"
+				className={`${overlayClass} right-1 w-[calc(50vw-6px)]`}
 				style={baseStyle}
 			/>
 		);
@@ -32,7 +35,7 @@ export function SnapOverlay({ snapTarget }: SnapOverlayProps) {
 
 	return (
 		<div
-			className="pointer-events-none fixed left-1 right-1 z-[999] rounded-lg border-2 border-[#3d8fd4]/50 bg-[#3d8fd4]/10 backdrop-blur-[1px] animate-fadeIn"
+			className={`${overlayClass} left-1 right-1`}
 			style={baseStyle}
 		/>
 	);

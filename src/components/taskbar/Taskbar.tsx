@@ -1,15 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { LayoutGrid } from 'lucide-react';
+import { Bell, Volume2 } from 'lucide-react';
 import { useWindowManager } from '../../context/WindowManagerContext';
-import { useIsMobile } from '../../hooks/useIsMobile';
 import { AppIconRenderer } from '../common/AppIconRenderer';
+import { ShipInsignia } from '../common/ShipInsignia';
 import { StartMenu } from './StartMenu';
 import { SystemTray } from './SystemTray';
 
 export function Taskbar() {
 	const { windows, toggleMinimizeWindow, activeWindowId } = useWindowManager();
 	const [menuOpen, setMenuOpen] = useState(false);
-	const isMobile = useIsMobile();
 	const taskbarRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -28,30 +27,26 @@ export function Taskbar() {
 	return (
 		<div ref={taskbarRef} className="relative z-[500] shrink-0">
 			<StartMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
-			<footer
-				className={`flex h-11 items-center gap-1 border-t px-2 ${
-					isMobile
-						? 'border-[#2a6a9a]/40 bg-[#0a2840]/95 backdrop-blur-md'
-						: 'border-[#2a6a9a]/30 bg-[#0f3550]/95 backdrop-blur-sm'
-				}`}
-			>
-				<button
-					id="start-menu-button"
-					type="button"
-					className={`flex h-8 items-center gap-2 rounded-md px-2.5 text-xs font-medium transition-colors ${
-						menuOpen
-							? 'bg-[#2a6a9a]/60 text-white'
-							: 'text-slate-200 hover:bg-[#2a6a9a]/40'
-					}`}
-					onClick={() => setMenuOpen((open) => !open)}
-				>
-					<LayoutGrid size={16} className="text-[#7ec8f0]" />
-					<span className="hidden sm:inline">Applications</span>
-				</button>
+			<footer className="terminal-chrome flex h-[52px] items-stretch border-t px-1 sm:px-2">
+				<div className="flex items-center gap-1 pr-1 sm:gap-2 sm:pr-2">
+					<button
+						id="start-menu-button"
+						type="button"
+						className={`terminal-bevel-sm flex h-10 w-10 shrink-0 items-center justify-center border transition-colors sm:h-11 sm:w-11 ${
+							menuOpen
+								? 'border-[var(--accent-purple)] bg-[var(--accent-purple)]/15 text-[var(--accent-purple-bright)]'
+								: 'border-[var(--border-silver)] bg-[var(--surface-inset)] text-[var(--accent-gold)] hover:border-[var(--accent-purple)]/40'
+						}`}
+						onClick={() => setMenuOpen((open) => !open)}
+						aria-label="Terminal modules"
+					>
+						<ShipInsignia size={20} />
+					</button>
+				</div>
 
-				<div className="mx-1 hidden h-5 w-px bg-[#3d8fd4]/25 sm:block" />
+				<div className="terminal-divider my-2 hidden sm:block" />
 
-				<div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto no-scrollbar">
+				<div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 no-scrollbar">
 					{windows.map((win) => {
 						const isActive = activeWindowId === win.id && win.state !== 'minimised';
 						const isMinimised = win.state === 'minimised';
@@ -60,20 +55,40 @@ export function Taskbar() {
 							<button
 								key={win.id}
 								type="button"
-								className={`flex h-8 max-w-[160px] shrink-0 items-center gap-1.5 rounded-md px-2 text-left text-[11px] transition-colors ${
+								className={`terminal-bevel-sm flex h-9 max-w-[180px] shrink-0 items-center gap-2 border px-2.5 text-left transition-colors sm:h-10 ${
 									isActive
-										? 'bg-[#2a6a9a]/70 text-white'
+										? 'border-[var(--accent-purple)] bg-[var(--accent-purple)]/12 text-white'
 										: isMinimised
-											? 'text-slate-400 hover:bg-[#1a4a6e]/50'
-											: 'text-slate-200 hover:bg-[#1a4a6e]/50'
+											? 'border-[var(--border-silver)] bg-transparent text-[var(--text-silver-dim)] hover:border-[var(--accent-purple)]/30'
+											: 'border-[var(--border-silver)] bg-[var(--surface-inset)]/50 text-[var(--text-silver)] hover:border-[var(--accent-purple)]/35'
 								}`}
 								onClick={() => toggleMinimizeWindow(win.id)}
 							>
-								<AppIconRenderer icon={win.icon} size={14} className="shrink-0 text-[#a8daf5]" />
-								<span className="truncate">{win.title}</span>
+								<AppIconRenderer
+									icon={win.icon}
+									size={14}
+									className={`shrink-0 ${isActive ? 'text-[var(--accent-purple-bright)]' : 'text-[var(--text-silver-dim)]'}`}
+								/>
+								<span className="truncate text-[10px] font-medium uppercase tracking-[0.1em]">
+									{win.title}
+								</span>
+								{isActive && (
+									<span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-purple-bright)] shadow-[0_0_6px_var(--accent-purple-glow)]" />
+								)}
 							</button>
 						);
 					})}
+				</div>
+
+				<div className="terminal-divider my-2 hidden md:block" />
+
+				<div className="hidden items-center gap-2 px-2 text-[var(--text-silver-dim)] md:flex">
+					<button type="button" className="p-1 hover:text-[var(--text-silver)]" aria-label="Notifications">
+						<Bell size={14} strokeWidth={1.5} />
+					</button>
+					<button type="button" className="p-1 hover:text-[var(--text-silver)]" aria-label="Audio">
+						<Volume2 size={14} strokeWidth={1.5} />
+					</button>
 				</div>
 
 				<SystemTray />

@@ -6,9 +6,9 @@ import type { DesktopIconItem } from '../../types';
 import { TASKBAR_HEIGHT } from '../../types';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 
-const CELL_WIDTH = 104;
-const CELL_HEIGHT = 112;
-const GRID_PADDING = 24;
+const CELL_WIDTH = 88;
+const CELL_HEIGHT = 92;
+const GRID_PADDING = 28;
 const DRAG_THRESHOLD = 6;
 const DOUBLE_TAP_MS = 350;
 
@@ -142,17 +142,11 @@ export function DesktopIconGrid() {
 	return (
 		<div
 			ref={gridRef}
-			className={`absolute inset-x-0 top-0 z-10 overflow-auto no-scrollbar ${isMobile ? 'bottom-14 px-4 pt-4' : 'bottom-14 px-6 pt-6'}`}
+			className={`absolute inset-x-0 top-0 z-10 overflow-auto no-scrollbar ${isMobile ? 'bottom-14 px-3 pt-3' : 'bottom-14 px-4 pt-5'}`}
 			style={{ paddingBottom: TASKBAR_HEIGHT }}
 			onClick={() => setSelectedId(null)}
 		>
-			<div
-				className={
-					isMobile
-						? 'grid grid-cols-3 gap-2'
-						: 'relative min-h-full'
-				}
-			>
+			<div className={isMobile ? 'grid grid-cols-3 gap-3' : 'relative min-h-full max-w-[320px]'}>
 				{icons.map((icon) => {
 					const isSelected = selectedId === icon.id;
 					const isDragging = draggingId === icon.id;
@@ -162,13 +156,13 @@ export function DesktopIconGrid() {
 							<button
 								key={icon.id}
 								type="button"
-								className="flex flex-col items-center gap-2 rounded-xl border border-[#3d8fd4]/20 bg-[#1a4a6e]/40 p-4 text-center backdrop-blur-sm transition-colors active:bg-[#1a5f8a]/50"
+								className="group flex flex-col items-center gap-2 p-2 text-center transition-transform active:scale-95"
 								onClick={() => handleOpen(icon.appId)}
 							>
-								<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#2a6a9a]/30 text-[#a8daf5]">
-									<AppIconRenderer icon={icon.icon} size={26} />
+								<div className="icon-module-frame icon-module-frame--hover terminal-bevel-sm group-active:border-[var(--accent-purple)]">
+									<AppIconRenderer icon={icon.icon} size={22} />
 								</div>
-								<span className="text-xs font-medium text-slate-100 icon-text-shadow">
+								<span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--text-silver)] icon-text-shadow">
 									{icon.title}
 								</span>
 							</button>
@@ -179,9 +173,9 @@ export function DesktopIconGrid() {
 						<button
 							key={icon.id}
 							type="button"
-							className={`absolute flex w-[96px] flex-col items-center gap-1.5 rounded-lg p-2 transition-colors ${
-								isSelected ? 'bg-white/10 ring-1 ring-[#3d8fd4]/40' : 'hover:bg-white/5'
-							} ${isDragging ? 'z-50 opacity-80' : ''}`}
+							className={`group absolute flex w-[76px] flex-col items-center gap-1.5 p-1 transition-opacity ${
+								isDragging ? 'z-50 opacity-70' : ''
+							}`}
 							style={{
 								left: GRID_PADDING + icon.gridCol * CELL_WIDTH,
 								top: GRID_PADDING + icon.gridRow * CELL_HEIGHT,
@@ -195,14 +189,15 @@ export function DesktopIconGrid() {
 								handleIconPointerDown(icon, event.clientX, event.clientY);
 							}}
 						>
-							<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#1a5f8a]/25 text-[#a8daf5] shadow-sm">
-								<AppIconRenderer icon={icon.icon} size={26} />
+							<div
+								className={`icon-module-frame icon-module-frame--hover terminal-bevel-sm ${
+									isSelected ? 'icon-module-frame--selected' : ''
+								}`}
+							>
+								<AppIconRenderer icon={icon.icon} size={22} />
 							</div>
-							<span className="max-w-full truncate text-center text-[11px] font-medium text-slate-100 icon-text-shadow">
+							<span className="max-w-full truncate text-center text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--text-silver)] icon-text-shadow">
 								{icon.title}
-							</span>
-							<span className="font-mono text-[9px] uppercase tracking-wider text-[#7ec8f0]/50">
-								{icon.badgeCode}
 							</span>
 						</button>
 					);
