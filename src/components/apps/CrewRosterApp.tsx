@@ -4,10 +4,11 @@ import { useActiveCommandProfile } from '../../context/GameSessionContext';
 import {
 	CORE_ATTRIBUTE_IDS,
 	CORE_ATTRIBUTES,
+	DIVISION_LIST,
 	formatGenderLabel,
+	formatModifierDelta,
 	formatPersonnelDisplayName,
 	formatPersonnelTitleLine,
-	formatStatWithModifier,
 	getCommandAppointment,
 	getDivision,
 	getEffectiveAttributeBreakdown,
@@ -16,9 +17,20 @@ import {
 	getRank,
 	getSpecies,
 	listRosterForDisplay,
+	POSITION_LIST,
 	PROFESSIONAL_SKILL_IDS,
 	PROFESSIONAL_SKILLS,
+	RANK_LIST,
+	SPECIES_LIST,
+	STAT_BASE_MAX,
+	type DivisionId,
+	type EffectiveStatBreakdown,
+	type PersonnelGender,
 	type PersonnelRecord,
+	type PositionId,
+	type RankId,
+	type RosterListEntry,
+	type SpeciesId,
 } from '../../domain/personnel';
 
 interface CrewRosterAppProps {
@@ -26,14 +38,183 @@ interface CrewRosterAppProps {
 	appId: string;
 }
 
+type RosterCategory = 'senior_staff' | 'engineering' | 'security' | 'medical' | 'science';
+
+const ROSTER_CATEGORIES: ReadonlyArray<{ id: RosterCategory; label: string }> = [
+	{ id: 'senior_staff', label: 'Senior Staff' },
+	{ id: 'engineering', label: 'Engineering' },
+	{ id: 'security', label: 'Security' },
+	{ id: 'medical', label: 'Medical' },
+	{ id: 'science', label: 'Science' },
+];
+
+const CATEGORY_DIVISION: Partial<Record<RosterCategory, DivisionId>> = {
+	engineering: 'engineering',
+	security: 'security',
+	medical: 'medical',
+	science: 'science',
+};
+
+interface RosterFilters {
+	divisionId: DivisionId | '';
+	rankId: RankId | '';
+	speciesId: SpeciesId | '';
+	gender: PersonnelGender | '';
+	positionId: PositionId | '';
+}
+
+const EMPTY_FILTERS: RosterFilters = {
+	divisionId: '',
+	rankId: '',
+	speciesId: '',
+	gender: '',
+	positionId: '',
+};
+
+type HierarchyAccent = 'captain' | 'xo' | 'senior' | 'standard';
+
+function getHierarchyAccent(entry: RosterListEntry): HierarchyAccent {
+	if (entry.isCaptain) {
+		return 'captain';
+	}
+	if (entry.person.positionId === 'first_officer') {
+		return 'xo';
+	}
+	if (entry.isSeniorStaff || entry.isSecondOfficer) {
+		return 'senior';
+	}
+	return 'standard';
+}
+
+function formatStatusLabel(status: PersonnelRecord['status']): string {
+	return status.replace(/_/g, ' ');
+}
+
+function buildRoleLine(entry: RosterListEntry): string {
+	const parts = [entry.roleLabel];
+	if (entry.isSecondOfficer) {
+		parts.push('Second Officer');
+	}
+	return parts.join(' · ');
+}
+
+function matchesSearch(entry: RosterListEntry, query: string): boolean {
+	const trimmed = query.trim().toLowerCase();
+	if (!trimmed) {
+		return true;
+	}
+
+	const person = entry.person;
+	const rank = getRank(person.rankId);
+	const division = getDivision(person.divisionId);
+	const position = getPosition(person.positionId);
+	const species = getSpecies(person.speciesId);
+	const name = formatPersonnelDisplayName(person.identity);
+
+	const haystack = [
+		name,
+		person.identity.firstName,
+		person.identity.lastName,
+		person.identity.middleName ?? '',
+		rank.name,
+		rank.abbreviation,
+		division.name,
+		position.name,
+		species.name,
+		entry.roleLabel,
+		person.commandAppointmentId ?? '',
+	]
+		.join(' ')
+		.toLowerCase();
+
+	return haystack.includes(trimmed);
+}
+
+function matchesFilters(entry: RosterListEntry, filters: RosterFilters): boolean {
+	const { person } = entry;
+	if (filters.divisionId && person.divisionId !== filters.divisionId) {
+		return false;
+	}
+	if (filters.rankId && person.rankId !== filters.rankId) {
+		return false;
+	}
+	if (filters.speciesId && person.speciesId !== filters.speciesId) {
+		return false;
+	}
+	if (filters.gender && person.gender !== filters.gender) {
+		return false;
+	}
+	if (filters.positionId && person.positionId !== filters.positionId) {
+		return false;
+	}
+	return true;
+}
+
+function matchesCategory(entry: RosterListEntry, category: RosterCategory): boolean {
+	if (category === 'senior_staff') {
+		return entry.isCaptain || entry.isSeniorStaff;
+	}
+	return entry.person.divisionId === CATEGORY_DIVISION[category];
+}
+
+function countActiveFilters(filters: RosterFilters): number {
+	return Object.values(filters).filter((value) => value !== '').length;
+}
+
+function StatMeter({
+	label,
+	breakdown,
+}: {
+	label: string;
+	breakdown: EffectiveStatBreakdown;
+}) {
+	const fillPercent = Math.max(
+		0,
+		Math.min(100, (breakdown.effective / STAT_BASE_MAX) * 100),
+	);
+	const hasModifier = breakdown.totalModifier !== 0;
+
+	return (
+		<div className="crew-meter">
+			<div className="crew-meter-head">
+				<span className="crew-meter-label">{label}</span>
+				<span className="crew-meter-values">
+					<span className="crew-meter-base">{breakdown.base}</span>
+					{hasModifier ? (
+						<span className="crew-meter-mod">
+							({formatModifierDelta(breakdown.totalModifier)})
+						</span>
+					) : null}
+					<span className="crew-meter-arrow" aria-hidden="true">
+						→
+					</span>
+					<strong className="crew-meter-effective">{breakdown.effective}</strong>
+				</span>
+			</div>
+			<div
+				className="crew-meter-track"
+				role="meter"
+				aria-label={label}
+				aria-valuemin={0}
+				aria-valuemax={STAT_BASE_MAX}
+				aria-valuenow={breakdown.effective}
+			>
+				<div className="crew-meter-fill" style={{ width: `${fillPercent}%` }} />
+			</div>
+		</div>
+	);
+}
+
 function PersonnelProfileView({
 	person,
 	roleLabel,
+	isCaptain,
 	isSecondOfficer,
 	onBack,
 }: {
 	person: PersonnelRecord;
 	roleLabel: string;
+	isCaptain: boolean;
 	isSecondOfficer: boolean;
 	onBack: () => void;
 }) {
@@ -48,22 +229,37 @@ function PersonnelProfileView({
 				? getCommandAppointment('second_officer')
 				: null;
 
+	const accent: HierarchyAccent = isCaptain
+		? 'captain'
+		: person.positionId === 'first_officer'
+			? 'xo'
+			: 'senior';
+
 	return (
-		<div className="crew-profile flex flex-col gap-4">
-			<div>
+		<div className="crew-profile">
+			<div className="crew-profile-toolbar">
 				<button type="button" className="game-btn game-btn--ghost" onClick={onBack}>
 					← ROSTER
 				</button>
 			</div>
 
-			<section className="module-panel rounded-sm p-4 terminal-bevel-sm">
-				<p className="crew-profile-role">{roleLabel.toUpperCase()}</p>
-				<h3 className="crew-profile-name">{formatPersonnelTitleLine(person)}</h3>
-				<p className="module-copy-muted mt-1">
-					{species.name} · {formatGenderLabel(person.gender)}
+			<header className={`crew-dossier crew-dossier--${accent} terminal-bevel-sm`}>
+				<div className="crew-dossier-topline">
+					<span className="crew-dossier-role">
+						{roleLabel.toUpperCase()}
+						{isSecondOfficer ? ' · SECOND OFFICER' : ''}
+					</span>
+					{person.service.serviceNumber ? (
+						<span className="crew-dossier-id">ID {person.service.serviceNumber}</span>
+					) : null}
+				</div>
+				<h3 className="crew-dossier-name">{formatPersonnelTitleLine(person)}</h3>
+				<p className="crew-dossier-identity">
+					{species.name}
 					{person.ageYears != null ? ` · Age ${person.ageYears}` : ''}
+					{` · ${formatGenderLabel(person.gender)}`}
 				</p>
-				<div className="crew-profile-meta mt-4">
+				<div className="crew-dossier-grid">
 					<div>
 						<span className="crew-meta-label">Rank</span>
 						<span className="crew-meta-value">{rank.name}</span>
@@ -79,62 +275,150 @@ function PersonnelProfileView({
 					{appointment ? (
 						<div>
 							<span className="crew-meta-label">Appointment</span>
-							<span className="crew-meta-value crew-meta-value--gold">{appointment.name}</span>
+							<span className="crew-meta-value crew-meta-value--gold">
+								{appointment.name}
+							</span>
 						</div>
 					) : null}
 					<div>
 						<span className="crew-meta-label">Status</span>
-						<span className="crew-meta-value">{person.status}</span>
+						<span className="crew-meta-value">{formatStatusLabel(person.status)}</span>
 					</div>
 				</div>
-			</section>
+			</header>
 
-			<section className="module-panel rounded-sm p-4 terminal-bevel-sm">
-				<h4 className="module-heading">Core Attributes</h4>
-				<div className="crew-stat-grid mt-3">
+			<section className="crew-section terminal-bevel-sm">
+				<h4 className="crew-section-title">Core Attributes</h4>
+				<div className="crew-meter-list">
 					{CORE_ATTRIBUTE_IDS.map((id) => (
-						<div key={id} className="crew-stat-row">
-							<span>{CORE_ATTRIBUTES[id].name}</span>
-							<strong>{formatStatWithModifier(getEffectiveAttributeBreakdown(person, id))}</strong>
-						</div>
+						<StatMeter
+							key={id}
+							label={CORE_ATTRIBUTES[id].name}
+							breakdown={getEffectiveAttributeBreakdown(person, id)}
+						/>
 					))}
 				</div>
 			</section>
 
-			<section className="module-panel rounded-sm p-4 terminal-bevel-sm">
-				<h4 className="module-heading">Professional Skills</h4>
-				<div className="crew-stat-grid mt-3">
+			<section className="crew-section terminal-bevel-sm">
+				<h4 className="crew-section-title">Professional Skills</h4>
+				<div className="crew-meter-list">
 					{PROFESSIONAL_SKILL_IDS.map((id) => (
-						<div key={id} className="crew-stat-row">
-							<span>{PROFESSIONAL_SKILLS[id].name}</span>
-							<strong>{formatStatWithModifier(getEffectiveSkillBreakdown(person, id))}</strong>
-						</div>
+						<StatMeter
+							key={id}
+							label={PROFESSIONAL_SKILLS[id].name}
+							breakdown={getEffectiveSkillBreakdown(person, id)}
+						/>
 					))}
 				</div>
 			</section>
 
-			<section className="module-panel rounded-sm p-4 terminal-bevel-sm">
-				<h4 className="module-heading">Species Notes</h4>
-				<p className="module-copy-muted mt-2">{species.description}</p>
+			<section className="crew-section terminal-bevel-sm">
+				<h4 className="crew-section-title">Species Profile</h4>
+				<p className="crew-section-copy">{species.description}</p>
 				{species.biologyNotes ? (
-					<p className="module-copy-muted mt-2">{species.biologyNotes}</p>
+					<p className="crew-section-copy crew-section-copy--dim">{species.biologyNotes}</p>
 				) : null}
 			</section>
+
+			{!isCaptain ? (
+				<section className="crew-section crew-section--actions terminal-bevel-sm">
+					<h4 className="crew-section-title">Command Actions</h4>
+					<p className="crew-section-copy crew-section-copy--dim">
+						Command interaction protocols reserved for future systems.
+					</p>
+				</section>
+			) : null}
 		</div>
+	);
+}
+
+function RosterEntryButton({
+	entry,
+	onSelect,
+}: {
+	entry: RosterListEntry;
+	onSelect: (id: string) => void;
+}) {
+	const species = getSpecies(entry.person.speciesId);
+	const rank = getRank(entry.person.rankId);
+	const accent = getHierarchyAccent(entry);
+
+	return (
+		<button
+			type="button"
+			className={`crew-entry crew-entry--${accent} terminal-bevel-sm`}
+			onClick={() => onSelect(entry.person.id)}
+		>
+			<span className="crew-entry-accent" aria-hidden="true" />
+			<div className="crew-entry-body">
+				<div className="crew-entry-role">{buildRoleLine(entry)}</div>
+				<div className="crew-entry-name">
+					{rank.abbreviation} {formatPersonnelDisplayName(entry.person.identity)}
+				</div>
+				<div className="crew-entry-meta">
+					{species.name}
+					{entry.person.ageYears != null ? ` · Age ${entry.person.ageYears}` : ''}
+					{` · ${formatGenderLabel(entry.person.gender)}`}
+				</div>
+			</div>
+			<span className="crew-entry-chevron" aria-hidden="true">
+				›
+			</span>
+		</button>
 	);
 }
 
 export function CrewRosterApp(_props: CrewRosterAppProps) {
 	const profile = useActiveCommandProfile();
 	const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [category, setCategory] = useState<RosterCategory>('senior_staff');
+	const [searchQuery, setSearchQuery] = useState('');
+	const [filters, setFilters] = useState<RosterFilters>(EMPTY_FILTERS);
+	const [filtersOpen, setFiltersOpen] = useState(false);
 
 	const roster = profile.future.crew;
 	const entries = useMemo(() => (roster ? listRosterForDisplay(roster) : []), [roster]);
 	const selectedEntry = entries.find((entry) => entry.person.id === selectedId) ?? null;
 
+	const genderOptions = useMemo(() => {
+		const seen = new Set<PersonnelGender>();
+		for (const entry of entries) {
+			seen.add(entry.person.gender);
+		}
+		return Array.from(seen).sort();
+	}, [entries]);
+
+	const speciesOptions = useMemo(() => {
+		const present = new Set(entries.map((entry) => entry.person.speciesId));
+		const fromRoster = SPECIES_LIST.filter((species) => present.has(species.id));
+		return fromRoster.length > 0 ? fromRoster : SPECIES_LIST;
+	}, [entries]);
+
+	const filteredEntries = useMemo(() => {
+		return entries.filter(
+			(entry) =>
+				matchesCategory(entry, category) &&
+				matchesSearch(entry, searchQuery) &&
+				matchesFilters(entry, filters),
+		);
+	}, [entries, category, searchQuery, filters]);
+
+	const activeFilterCount = countActiveFilters(filters);
+	const hasQueryOrFilters = searchQuery.trim().length > 0 || activeFilterCount > 0;
+
+	const clearFilters = () => {
+		setFilters(EMPTY_FILTERS);
+		setSearchQuery('');
+	};
+
+	const updateFilter = <K extends keyof RosterFilters>(key: K, value: RosterFilters[K]) => {
+		setFilters((current) => ({ ...current, [key]: value }));
+	};
+
 	return (
 		<div className="module-shell module-workspace select-text">
-			<div className="module-header px-6 py-4">
+			<div className="module-header px-4 py-3 sm:px-6 sm:py-4">
 				<div className="flex items-center gap-3">
 					<div className="module-icon-frame terminal-bevel-sm">
 						<AppIconRenderer icon="users" size={20} />
@@ -146,7 +430,7 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 				</div>
 			</div>
 
-			<div className="module-body flex flex-col gap-4 overflow-y-auto px-6 py-6">
+			<div className="module-body flex min-h-0 flex-col gap-3 overflow-y-auto px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
 				{!roster || entries.length === 0 ? (
 					<section className="module-panel rounded-sm p-6 text-center terminal-bevel-sm">
 						<p className="module-copy">No personnel records on file for this command.</p>
@@ -158,53 +442,230 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 					<PersonnelProfileView
 						person={selectedEntry.person}
 						roleLabel={selectedEntry.roleLabel}
+						isCaptain={selectedEntry.isCaptain}
 						isSecondOfficer={selectedEntry.isSecondOfficer}
 						onBack={() => setSelectedId(null)}
 					/>
 				) : (
 					<>
-						<p className="crew-roster-lede">
-							Planetary Union personnel assigned to this vessel. Select an officer to open their
-							service profile.
-						</p>
-						<section className="crew-roster-section">
-							<h3 className="crew-roster-section-title">COMMAND & SENIOR STAFF</h3>
-							<div className="crew-roster-list">
-								{entries.map((entry) => {
-									const species = getSpecies(entry.person.speciesId);
-									const rank = getRank(entry.person.rankId);
-									return (
-										<button
-											key={entry.person.id}
-											type="button"
-											className="crew-roster-row terminal-bevel-sm"
-											onClick={() => setSelectedId(entry.person.id)}
+						<nav className="crew-cat-nav" aria-label="Roster categories">
+							{ROSTER_CATEGORIES.map((item) => (
+								<button
+									key={item.id}
+									type="button"
+									className={
+										category === item.id
+											? 'crew-cat-tab crew-cat-tab--active'
+											: 'crew-cat-tab'
+									}
+									onClick={() => setCategory(item.id)}
+								>
+									{item.label}
+								</button>
+							))}
+						</nav>
+
+						<div className="crew-toolbar">
+							<label className="crew-search">
+								<span className="crew-search-label">Search</span>
+								<input
+									type="search"
+									className="crew-search-input"
+									placeholder="Name, rank, position, species…"
+									value={searchQuery}
+									onChange={(event) => setSearchQuery(event.target.value)}
+								/>
+							</label>
+							<button
+								type="button"
+								className={
+									filtersOpen || activeFilterCount > 0
+										? 'crew-filter-toggle crew-filter-toggle--active'
+										: 'crew-filter-toggle'
+								}
+								onClick={() => setFiltersOpen((open) => !open)}
+								aria-expanded={filtersOpen}
+							>
+								Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+							</button>
+						</div>
+
+						{filtersOpen ? (
+							<div className="crew-filter-panel terminal-bevel-sm">
+								<div className="crew-filter-grid">
+									<label className="crew-filter-field">
+										<span>Division</span>
+										<select
+											value={filters.divisionId}
+											onChange={(event) =>
+												updateFilter(
+													'divisionId',
+													event.target.value as DivisionId | '',
+												)
+											}
 										>
-											<div className="crew-roster-row-main">
-												<div className="crew-roster-row-role">
-													{entry.roleLabel}
-													{entry.isSecondOfficer ? ' · Second Officer' : ''}
-												</div>
-												<div className="crew-roster-row-name">
-													{rank.abbreviation}{' '}
-													{formatPersonnelDisplayName(entry.person.identity)}
-												</div>
-												<div className="crew-roster-row-meta">
+											<option value="">All</option>
+											{DIVISION_LIST.map((division) => (
+												<option key={division.id} value={division.id}>
+													{division.name}
+												</option>
+											))}
+										</select>
+									</label>
+									<label className="crew-filter-field">
+										<span>Rank</span>
+										<select
+											value={filters.rankId}
+											onChange={(event) =>
+												updateFilter('rankId', event.target.value as RankId | '')
+											}
+										>
+											<option value="">All</option>
+											{RANK_LIST.map((rank) => (
+												<option key={rank.id} value={rank.id}>
+													{rank.name}
+												</option>
+											))}
+										</select>
+									</label>
+									<label className="crew-filter-field">
+										<span>Species</span>
+										<select
+											value={filters.speciesId}
+											onChange={(event) =>
+												updateFilter(
+													'speciesId',
+													event.target.value as SpeciesId | '',
+												)
+											}
+										>
+											<option value="">All</option>
+											{speciesOptions.map((species) => (
+												<option key={species.id} value={species.id}>
 													{species.name}
-													{entry.person.ageYears != null
-														? ` · Age ${entry.person.ageYears}`
-														: ''}
-													{' · '}
-													{formatGenderLabel(entry.person.gender)}
-												</div>
-											</div>
-											<span className="crew-roster-row-chevron" aria-hidden="true">
-												›
-											</span>
+												</option>
+											))}
+										</select>
+									</label>
+									<label className="crew-filter-field">
+										<span>Gender</span>
+										<select
+											value={filters.gender}
+											onChange={(event) =>
+												updateFilter(
+													'gender',
+													event.target.value as PersonnelGender | '',
+												)
+											}
+										>
+											<option value="">All</option>
+											{genderOptions.map((gender) => (
+												<option key={gender} value={gender}>
+													{formatGenderLabel(gender)}
+												</option>
+											))}
+										</select>
+									</label>
+									<label className="crew-filter-field">
+										<span>Position</span>
+										<select
+											value={filters.positionId}
+											onChange={(event) =>
+												updateFilter(
+													'positionId',
+													event.target.value as PositionId | '',
+												)
+											}
+										>
+											<option value="">All</option>
+											{POSITION_LIST.map((position) => (
+												<option key={position.id} value={position.id}>
+													{position.name}
+												</option>
+											))}
+										</select>
+									</label>
+								</div>
+								{hasQueryOrFilters ? (
+									<div className="crew-filter-actions">
+										<button
+											type="button"
+											className="game-btn game-btn--ghost"
+											onClick={clearFilters}
+										>
+											Clear Filters
 										</button>
-									);
-								})}
+									</div>
+								) : null}
 							</div>
+						) : null}
+
+						{hasQueryOrFilters && !filtersOpen ? (
+							<div className="crew-active-filters">
+								<span className="crew-active-filters-label">Active</span>
+								{searchQuery.trim() ? (
+									<span className="crew-chip">Search: {searchQuery.trim()}</span>
+								) : null}
+								{filters.divisionId ? (
+									<span className="crew-chip">
+										{getDivision(filters.divisionId).name}
+									</span>
+								) : null}
+								{filters.rankId ? (
+									<span className="crew-chip">{getRank(filters.rankId).name}</span>
+								) : null}
+								{filters.speciesId ? (
+									<span className="crew-chip">
+										{getSpecies(filters.speciesId).name}
+									</span>
+								) : null}
+								{filters.gender ? (
+									<span className="crew-chip">{formatGenderLabel(filters.gender)}</span>
+								) : null}
+								{filters.positionId ? (
+									<span className="crew-chip">
+										{getPosition(filters.positionId).name}
+									</span>
+								) : null}
+								<button
+									type="button"
+									className="crew-chip-clear"
+									onClick={clearFilters}
+								>
+									Clear
+								</button>
+							</div>
+						) : null}
+
+						<section className="crew-roster-section">
+							<div className="crew-roster-section-head">
+								<h3 className="crew-roster-section-title">
+									{ROSTER_CATEGORIES.find((item) => item.id === category)?.label ??
+										'Senior Staff'}
+								</h3>
+								<span className="crew-roster-count">
+									{filteredEntries.length} personnel
+								</span>
+							</div>
+
+							{filteredEntries.length === 0 ? (
+								<div className="crew-empty terminal-bevel-sm">
+									<p className="module-copy">No personnel match current criteria.</p>
+									<p className="module-copy-muted mt-1">
+										Adjust category, search, or filters to widen results.
+									</p>
+								</div>
+							) : (
+								<div className="crew-roster-list">
+									{filteredEntries.map((entry) => (
+										<RosterEntryButton
+											key={entry.person.id}
+											entry={entry}
+											onSelect={setSelectedId}
+										/>
+									))}
+								</div>
+							)}
 						</section>
 					</>
 				)}
