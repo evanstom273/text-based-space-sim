@@ -3,6 +3,31 @@
 @theme {
 	--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 	--font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+	--color-charcoal: #202020;
+	--color-charcoal-light: #2a2a2a;
+	--color-charcoal-dark: #161616;
+	--color-silver: #d8d8e0;
+	--color-silver-dim: #9898a4;
+	--color-accent-purple: #9b59d0;
+	--color-accent-purple-bright: #b47de8;
+	--color-accent-purple-dim: #6b3fa0;
+	--color-accent-gold: #c9a84c;
+	--color-accent-gold-dim: #8a7330;
+}
+
+:root {
+	--bg-charcoal: #202020;
+	--surface-raised: #2a2a2a;
+	--surface-inset: #181818;
+	--border-silver: rgba(216, 216, 224, 0.18);
+	--border-silver-bright: rgba(232, 232, 236, 0.32);
+	--text-silver: #e8e8ec;
+	--text-silver-dim: #9898a4;
+	--accent-purple: #9b59d0;
+	--accent-purple-glow: rgba(155, 89, 208, 0.35);
+	--accent-gold: #c9a84c;
+	--accent-gold-dim: rgba(201, 168, 76, 0.25);
 }
 
 * {
@@ -15,8 +40,8 @@ body {
 	width: 100vw;
 	height: 100vh;
 	font-family: var(--font-sans);
-	background: #0a2840;
-	color: #e2e8f0;
+	background: var(--bg-charcoal);
+	color: var(--text-silver);
 }
 
 #root {
@@ -25,35 +50,164 @@ body {
 }
 
 .bg-terminal-pattern {
-	background-color: #0c3452;
-	background-image:
-		radial-gradient(ellipse at 50% 0%, rgba(61, 143, 212, 0.15) 0%, transparent 60%),
-		linear-gradient(rgba(126, 200, 240, 0.03) 1px, transparent 1px),
-		linear-gradient(90deg, rgba(126, 200, 240, 0.03) 1px, transparent 1px);
-	background-size: 100% 100%, 48px 48px, 48px 48px;
+	background-color: var(--bg-charcoal);
 }
 
-.terminal-watermark {
+.terminal-grid {
+	background-image:
+		linear-gradient(rgba(232, 232, 236, 0.025) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(232, 232, 236, 0.025) 1px, transparent 1px);
+	background-size: 40px 40px;
+	mask-image: radial-gradient(ellipse at 30% 40%, black 20%, transparent 75%);
+}
+
+.terminal-starfield {
+	background-image:
+		radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.35) 0%, transparent 100%),
+		radial-gradient(1px 1px at 78% 32%, rgba(255, 255, 255, 0.25) 0%, transparent 100%),
+		radial-gradient(1px 1px at 45% 72%, rgba(255, 255, 255, 0.2) 0%, transparent 100%),
+		radial-gradient(1px 1px at 88% 68%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+		radial-gradient(1px 1px at 25% 55%, rgba(255, 255, 255, 0.15) 0%, transparent 100%),
+		radial-gradient(1px 1px at 62% 12%, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+	opacity: 0.5;
+}
+
+.terminal-radar {
 	background:
-		radial-gradient(circle at 80% 70%, rgba(61, 143, 212, 0.06) 0%, transparent 40%),
-		radial-gradient(circle at 20% 30%, rgba(126, 200, 240, 0.04) 0%, transparent 35%);
+		radial-gradient(circle at 72% 48%, transparent 0%, transparent 18%, rgba(155, 89, 208, 0.04) 18.2%, transparent 18.4%),
+		radial-gradient(circle at 72% 48%, transparent 0%, transparent 32%, rgba(232, 232, 236, 0.03) 32.2%, transparent 32.4%),
+		radial-gradient(circle at 72% 48%, transparent 0%, transparent 48%, rgba(232, 232, 236, 0.025) 48.2%, transparent 48.4%);
+}
+
+.terminal-ship-schematic {
+	color: var(--text-silver);
+}
+
+.terminal-markings {
+	background:
+		linear-gradient(135deg, transparent 49.5%, rgba(232, 232, 236, 0.04) 50%, transparent 50.5%) 0 0 / 120px 120px,
+		linear-gradient(225deg, transparent 49.5%, rgba(155, 89, 208, 0.03) 50%, transparent 50.5%) 60px 60px / 120px 120px;
+	opacity: 0.6;
+}
+
+.terminal-chrome {
+	background: linear-gradient(180deg, #2e2e2e 0%, #222222 48%, #1a1a1a 100%);
+	border-color: var(--border-silver);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.06),
+		0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.terminal-chrome-inset {
+	background: linear-gradient(180deg, #1a1a1a 0%, #222222 100%);
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.terminal-bevel {
+	clip-path: polygon(
+		8px 0,
+		calc(100% - 8px) 0,
+		100% 8px,
+		100% calc(100% - 8px),
+		calc(100% - 8px) 100%,
+		8px 100%,
+		0 calc(100% - 8px),
+		0 8px
+	);
+}
+
+.terminal-bevel-sm {
+	clip-path: polygon(
+		4px 0,
+		calc(100% - 4px) 0,
+		100% 4px,
+		100% calc(100% - 4px),
+		calc(100% - 4px) 100%,
+		4px 100%,
+		0 calc(100% - 4px),
+		0 4px
+	);
+}
+
+.terminal-divider {
+	width: 1px;
+	background: linear-gradient(
+		180deg,
+		transparent 0%,
+		rgba(232, 232, 236, 0.2) 20%,
+		rgba(232, 232, 236, 0.2) 80%,
+		transparent 100%
+	);
+}
+
+.icon-module-frame {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	background: linear-gradient(145deg, rgba(42, 42, 42, 0.9) 0%, rgba(26, 26, 26, 0.95) 100%);
+	border: 1px solid var(--border-silver);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.05),
+		0 2px 8px rgba(0, 0, 0, 0.35);
+	color: var(--text-silver);
+}
+
+.icon-module-frame::before {
+	content: "";
+	position: absolute;
+	inset: 3px;
+	border: 1px solid rgba(232, 232, 236, 0.06);
+	clip-path: polygon(
+		3px 0,
+		calc(100% - 3px) 0,
+		100% 3px,
+		100% calc(100% - 3px),
+		calc(100% - 3px) 100%,
+		3px 100%,
+		0 calc(100% - 3px),
+		0 3px
+	);
+	pointer-events: none;
+}
+
+.icon-module-frame--selected {
+	border-color: var(--accent-purple);
+	box-shadow:
+		inset 0 0 12px var(--accent-purple-glow),
+		0 0 12px rgba(155, 89, 208, 0.2);
+	color: var(--accent-purple-bright);
+}
+
+.icon-module-frame--hover:hover {
+	border-color: rgba(155, 89, 208, 0.45);
 }
 
 .window-shadow {
 	box-shadow:
-		0 4px 24px rgba(10, 40, 64, 0.18),
-		0 1px 3px rgba(10, 40, 64, 0.12);
+		0 8px 32px rgba(0, 0, 0, 0.45),
+		0 2px 8px rgba(0, 0, 0, 0.3),
+		inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .window-shadow-focused {
 	box-shadow:
-		0 0 0 1px rgba(61, 143, 212, 0.35),
-		0 8px 32px rgba(10, 40, 64, 0.22),
-		0 2px 8px rgba(61, 143, 212, 0.12);
+		0 0 0 1px var(--accent-purple),
+		0 0 20px var(--accent-purple-glow),
+		0 12px 40px rgba(0, 0, 0, 0.5),
+		inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .icon-text-shadow {
-	text-shadow: 0 1px 3px rgba(10, 40, 64, 0.6);
+	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.status-nominal {
+	color: #6ee7a0;
+	border-color: rgba(110, 231, 160, 0.35);
+	background: rgba(110, 231, 160, 0.08);
 }
 
 @keyframes fadeIn {
@@ -80,14 +234,17 @@ body {
 
 @media (max-width: 639px) {
 	body {
-		background: #0a2840;
+		background: var(--bg-charcoal);
 	}
 
-	.bg-terminal-pattern {
-		background-color: #0a2840;
-		background-image:
-			linear-gradient(180deg, rgba(61, 143, 212, 0.08) 0%, transparent 30%),
-			radial-gradient(ellipse at 50% 100%, rgba(26, 95, 138, 0.12) 0%, transparent 50%);
-		background-size: 100% 100%;
+	.terminal-grid {
+		mask-image: none;
+		opacity: 0.4;
+	}
+
+	.terminal-ship-schematic {
+		opacity: 0.04;
+		width: 80%;
+		right: 10%;
 	}
 }
