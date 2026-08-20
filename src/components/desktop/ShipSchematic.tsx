@@ -1,49 +1,55 @@
 export function ShipSchematic() {
 	return (
 		<div className="terminal-ship-wrap pointer-events-none absolute inset-0" aria-hidden="true">
-			<div className="terminal-ship-glow" />
 			<svg
 				className="terminal-ship-schematic"
 				viewBox="0 0 420 520"
 				fill="none"
 				preserveAspectRatio="xMidYMid meet"
 			>
-				<g className="ship-layer-radar" opacity="0.2">
-					<circle cx="280" cy="260" r="180" stroke="currentColor" strokeWidth="0.6" />
-					<circle cx="280" cy="260" r="130" stroke="currentColor" strokeWidth="0.5" />
-					<circle cx="280" cy="260" r="80" stroke="currentColor" strokeWidth="0.4" />
-					<line x1="100" y1="260" x2="460" y2="260" stroke="currentColor" strokeWidth="0.35" />
-					<line x1="280" y1="80" x2="280" y2="440" stroke="currentColor" strokeWidth="0.35" />
-				</g>
+				<defs>
+					<pattern id="ship-blueprint-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+						<path
+							d="M 20 0 L 0 0 0 20"
+							fill="none"
+							stroke="rgba(240,240,244,0.04)"
+							strokeWidth="0.4"
+						/>
+					</pattern>
+				</defs>
+				<rect
+					x="140"
+					y="40"
+					width="280"
+					height="420"
+					fill="url(#ship-blueprint-grid)"
+					opacity="0.6"
+				/>
 
 				<g className="ship-layer-hull">
-					<ellipse cx="280" cy="118" rx="72" ry="34" stroke="currentColor" strokeWidth="1.8" />
-					<ellipse cx="280" cy="118" rx="48" ry="18" stroke="currentColor" strokeWidth="0.9" opacity="0.75" />
+					<ellipse cx="280" cy="118" rx="78" ry="36" stroke="currentColor" strokeWidth="1.8" />
+					<ellipse cx="280" cy="118" rx="52" ry="20" stroke="currentColor" strokeWidth="0.9" opacity="0.75" />
+					<path d="M280 154 L280 200" stroke="currentColor" strokeWidth="1.5" />
 					<path
-						d="M280 152 L280 198"
-						stroke="currentColor"
-						strokeWidth="1.5"
-					/>
-					<path
-						d="M248 198 L312 198 L318 230 L242 230 Z"
+						d="M244 200 L316 200 L322 232 L238 232 Z"
 						stroke="currentColor"
 						strokeWidth="1.6"
 						strokeLinejoin="bevel"
 					/>
 					<path
-						d="M258 230 L258 340 L302 340 L302 230"
+						d="M254 232 L254 348 L306 348 L306 232"
 						stroke="currentColor"
 						strokeWidth="1.5"
 						strokeLinejoin="bevel"
 					/>
 					<path
-						d="M248 340 L312 340 L300 392 L260 392 Z"
+						d="M244 348 L316 348 L304 400 L256 400 Z"
 						stroke="currentColor"
 						strokeWidth="1.6"
 						strokeLinejoin="bevel"
 					/>
 					<path
-						d="M260 392 L300 392 L288 430 L272 430 Z"
+						d="M256 400 L304 400 L292 438 L268 438 Z"
 						stroke="currentColor"
 						strokeWidth="1.4"
 						strokeLinejoin="bevel"
@@ -52,39 +58,48 @@ export function ShipSchematic() {
 
 				<g className="ship-layer-nacelles">
 					<path
-						d="M242 230 L168 248 L158 268 L168 288 L242 270"
+						d="M238 232 L160 252 L150 272 L160 292 L238 272"
 						stroke="currentColor"
 						strokeWidth="1.1"
 						strokeLinejoin="bevel"
 					/>
 					<path
-						d="M318 230 L392 248 L402 268 L392 288 L318 270"
+						d="M322 232 L400 252 L410 272 L400 292 L322 272"
 						stroke="currentColor"
 						strokeWidth="1.1"
 						strokeLinejoin="bevel"
 					/>
-					<ellipse cx="148" cy="268" rx="28" ry="10" stroke="currentColor" strokeWidth="1" />
-					<ellipse cx="412" cy="268" rx="28" ry="10" stroke="currentColor" strokeWidth="1" />
-					<path d="M148 258 L148 278" stroke="currentColor" strokeWidth="0.6" opacity="0.6" />
-					<path d="M412 258 L412 278" stroke="currentColor" strokeWidth="0.6" opacity="0.6" />
+					<ellipse cx="140" cy="272" rx="30" ry="11" stroke="currentColor" strokeWidth="1" />
+					<ellipse cx="420" cy="272" rx="30" ry="11" stroke="currentColor" strokeWidth="1" />
+				</g>
+
+				<g className="ship-layer-detail" opacity="0.55">
+					<path d="M264 212 L296 212" stroke="currentColor" strokeWidth="0.5" className="ship-line-pulse" />
+					<path
+						d="M260 284 L300 284"
+						stroke="currentColor"
+						strokeWidth="0.5"
+						className="ship-line-pulse ship-line-pulse--delay"
+					/>
+					<path d="M260 316 L300 316" stroke="currentColor" strokeWidth="0.5" />
+					<path
+						d="M266 368 L294 368"
+						stroke="currentColor"
+						strokeWidth="0.5"
+						className="ship-line-pulse ship-line-pulse--delay2"
+					/>
 				</g>
 
 				<g className="ship-layer-accent">
-					<circle cx="280" cy="118" r="4" className="ship-marker-gold" />
-					<circle cx="280" cy="268" r="3" className="ship-marker-purple" />
+					<circle cx="280" cy="118" r="4" className="ship-marker-gold ship-node-pulse" />
+					<circle cx="280" cy="272" r="3" className="ship-marker-purple ship-node-pulse ship-node-pulse--delay" />
+					<circle cx="254" cy="212" r="2" className="ship-marker-purple ship-node-pulse ship-node-pulse--delay2" />
 					<path
-						d="M272 430 L288 430"
+						d="M268 438 L292 438"
 						stroke="currentColor"
 						strokeWidth="1.5"
-						className="ship-marker-gold"
+						className="ship-marker-gold ship-line-pulse"
 					/>
-				</g>
-
-				<g className="ship-layer-detail" opacity="0.5">
-					<path d="M268 210 L292 210" stroke="currentColor" strokeWidth="0.5" />
-					<path d="M264 280 L296 280" stroke="currentColor" strokeWidth="0.5" />
-					<path d="M264 310 L296 310" stroke="currentColor" strokeWidth="0.5" />
-					<path d="M270 360 L290 360" stroke="currentColor" strokeWidth="0.5" />
 				</g>
 			</svg>
 		</div>
