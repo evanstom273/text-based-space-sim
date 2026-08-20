@@ -270,7 +270,7 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 			ref={frameRef}
 			className={`flex flex-col overflow-hidden border bg-[#ececf0] terminal-bevel ${
 				win.isFocused
-					? 'window-shadow-focused border-[var(--accent-purple)]'
+					? 'window-shadow-focused border-[rgba(176,120,240,0.85)]'
 					: 'window-shadow border-[var(--border-silver-bright)]'
 			} ${isMobile ? 'rounded-none border-x-0' : ''}`}
 			style={getFrameStyle()}
@@ -279,8 +279,8 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 			<div
 				className={`flex h-9 shrink-0 items-center justify-between border-b px-2 ${
 					win.isFocused
-						? 'border-[var(--accent-purple)]/30 bg-gradient-to-r from-[#2a2a2a] via-[#252525] to-[#1f1f1f]'
-						: 'border-[var(--border-silver)] bg-gradient-to-r from-[#242424] to-[#1c1c1c]'
+						? 'border-[rgba(176,120,240,0.45)] bg-gradient-to-r from-[#2e2e2e] via-[#262626] to-[#1c1c1c] shadow-[inset_0_0_20px_rgba(131,68,201,0.12)]'
+						: 'border-[var(--border-silver)] bg-gradient-to-r from-[#242424] to-[#181818]'
 				} ${canManipulate ? 'cursor-grab active:cursor-grabbing' : ''}`}
 				onPointerDown={handleTitlePointerDown}
 				onPointerMove={handleTitlePointerMove}

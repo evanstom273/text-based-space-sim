@@ -58,5 +58,5 @@ export interface DesktopIconItem {
 	gridRow: number;
 }
 
-export const STATUS_BAR_HEIGHT = 40;
-export const TASKBAR_HEIGHT = 52;
+export const STATUS_BAR_HEIGHT = 48;
+export const TASKBAR_HEIGHT = 60;

@@ -13,7 +13,7 @@ export function SnapOverlay({ snapTarget }: SnapOverlayProps) {
 	};
 
 	const overlayClass =
-		'pointer-events-none fixed z-[999] animate-fadeIn border border-[var(--accent-purple)]/50 bg-[var(--accent-purple)]/8 backdrop-blur-[1px] terminal-bevel';
+		'pointer-events-none fixed z-[999] animate-fadeIn border-2 border-[rgba(176,120,240,0.55)] bg-[rgba(131,68,201,0.12)] backdrop-blur-[2px] terminal-bevel shadow-[0_0_24px_rgba(131,68,201,0.2)]';
 
 	if (snapTarget === 'left') {
 		return (
