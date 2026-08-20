@@ -1,6 +1,7 @@
 import type { CalendarEventMarker, TimeSpeedMultiplier } from '../utils/shipCalendar';
 import type { ShipStateSnapshot } from '../utils/shipPersistence';
 import type { CrewRosterState } from '../domain/personnel/roster';
+import type { PersonnelRecord } from '../domain/personnel/personnel';
 
 export const COMMAND_PROFILE_VERSION = 1 as const;
 
@@ -44,6 +45,11 @@ export interface CreateProfileInput {
 	captainName: string;
 	shipName: string;
 	registry: string;
+	/** Full captain personnel record (species, attributes, skills). */
+	captainPersonnel: PersonnelRecord;
+	/** Locked senior staff (Second Officer appointment applied on save). */
+	seniorStaff: PersonnelRecord[];
+	secondOfficerPersonnelId: string;
 }
 
 export type GamePhase = 'boot' | 'profiles' | 'create' | 'auth' | 'desktop';
