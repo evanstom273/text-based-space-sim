@@ -10,12 +10,16 @@ function injectBuildMeta(): Plugin {
 		name: 'inject-build-meta',
 		transformIndexHtml(html) {
 			return html.replace(
-				'<head>',
-				`<head>
-		<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-		<meta http-equiv="Pragma" content="no-cache" />
-		<meta name="build-id" content="${buildId}" />`,
+				/(<meta name="build-id" content=")[^"]*(" \/>)/,
+				`$1${buildId}$2`,
 			);
+		},
+		generateBundle() {
+			this.emitFile({
+				type: 'asset',
+				fileName: 'version.json',
+				source: JSON.stringify({ buildId }, null, 2),
+			});
 		},
 	};
 }

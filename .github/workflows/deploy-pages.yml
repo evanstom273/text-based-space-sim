@@ -52,3 +52,27 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live build ID
+        env:
+          EXPECTED_BUILD: ${{ github.sha }}
+          SITE_URL: https://evanstom273.github.io/text-based-space-sim/
+        run: |
+          set -euo pipefail
+          target="${EXPECTED_BUILD:0:7}"
+          for attempt in 1 2 3 4 5 6; do
+            sleep 10
+            html="$(curl -fsSL "$SITE_URL")"
+            live="$(printf '%s' "$html" | sed -n 's/.*name="build-id" content="\([^"]*\)".*/\1/p' | head -n 1)"
+            if [ "$live" = "$target" ]; then
+              echo "Live site verified: BLD $live"
+              exit 0
+            fi
+            echo "Attempt $attempt: live='$live' expected='$target'"
+          done
+          echo "Deploy verification failed after 60s"
+          exit 1
