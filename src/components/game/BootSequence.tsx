@@ -104,7 +104,7 @@ export function BootSequence({ onComplete }: BootSequenceProps) {
 					<ShipInsignia size={56} className="text-[var(--accent-gold-bright)]" />
 				</div>
 				<div className="boot-title">UNION COMMAND TERMINAL</div>
-				<div className="boot-subtitle">PLANETARY UNION · VESSEL OPERATIONS</div>
+				<div className="boot-subtitle">THE ORVILLE UNIVERSE · PLANETARY UNION · VESSEL OPERATIONS</div>
 			</div>
 
 			{scanActive ? <div className="boot-scanline" aria-hidden="true" /> : null}
