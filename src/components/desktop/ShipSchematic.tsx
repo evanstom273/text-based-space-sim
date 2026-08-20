@@ -23,7 +23,7 @@ export function ShipSchematic() {
 					width="280"
 					height="420"
 					fill="url(#ship-blueprint-grid)"
-					opacity="0.6"
+					opacity="0.35"
 				/>
 
 				<g className="ship-layer-hull">
@@ -73,7 +73,7 @@ export function ShipSchematic() {
 					<ellipse cx="420" cy="272" rx="30" ry="11" stroke="currentColor" strokeWidth="1" />
 				</g>
 
-				<g className="ship-layer-detail" opacity="0.55">
+				<g className="ship-layer-detail" opacity="0.4">
 					<path d="M264 212 L296 212" stroke="currentColor" strokeWidth="0.5" className="ship-line-pulse" />
 					<path
 						d="M260 284 L300 284"

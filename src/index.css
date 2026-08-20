@@ -94,15 +94,19 @@ body {
 	background-size: 48px 48px;
 	mask-image: radial-gradient(ellipse at 22% 35%, black 0%, black 35%, transparent 72%);
 	opacity: 0.85;
-	animation: grid-drift 240s linear infinite;
+	background-repeat: repeat;
+	will-change: background-position;
+	animation: grid-scroll-xy 45s linear infinite;
 }
 
 .terminal-plot-lines {
 	background:
-		linear-gradient(118deg, transparent 49.6%, rgba(131, 68, 201, 0.06) 50%, transparent 50.4%) 0 0 / 100% 100%,
-		linear-gradient(62deg, transparent 49.6%, rgba(240, 240, 244, 0.05) 50%, transparent 50.4%) 0 0 / 100% 100%;
+		linear-gradient(118deg, transparent 49.6%, rgba(131, 68, 201, 0.06) 50%, transparent 50.4%) 0 0 / 50% 50%,
+		linear-gradient(62deg, transparent 49.6%, rgba(240, 240, 244, 0.05) 50%, transparent 50.4%) 0 0 / 50% 50%;
 	opacity: 0.7;
-	animation: plot-shift 180s ease-in-out infinite alternate;
+	background-repeat: repeat;
+	will-change: background-position;
+	animation: plot-scroll-xy 55s linear infinite;
 }
 
 .terminal-starfield-far {
@@ -117,7 +121,9 @@ body {
 		radial-gradient(1px 1px at 44% 88%, rgba(255, 255, 255, 0.22) 0%, transparent 100%);
 	opacity: 0.65;
 	background-size: 420px 420px;
-	animation: starfield-drift-far 200s linear infinite;
+	background-repeat: repeat;
+	will-change: background-position;
+	animation: starfield-scroll-xy-far 60s linear infinite;
 }
 
 .terminal-starfield-near {
@@ -128,7 +134,9 @@ body {
 		radial-gradient(1px 1px at 38% 58%, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
 	opacity: 0.55;
 	background-size: 320px 320px;
-	animation: starfield-drift-near 140s linear infinite;
+	background-repeat: repeat;
+	will-change: background-position;
+	animation: starfield-scroll-xy-near 40s linear infinite;
 }
 
 .terminal-ship-wrap {
@@ -201,15 +209,16 @@ body {
 }
 
 .terminal-ship-schematic {
-	color: rgba(240, 240, 244, 0.48);
+	color: rgba(240, 240, 244, 0.3);
+	opacity: 0.38;
 }
 
 .ship-layer-hull {
-	color: rgba(245, 245, 248, 0.62);
+	color: rgba(245, 245, 248, 0.34);
 }
 
 .ship-layer-nacelles {
-	color: rgba(240, 240, 244, 0.48);
+	color: rgba(240, 240, 244, 0.26);
 }
 
 .ship-layer-radar {
@@ -243,13 +252,13 @@ body {
 .ship-layer-accent .ship-marker-gold {
 	stroke: var(--accent-gold-bright);
 	fill: var(--accent-gold-bright);
-	opacity: 0.85;
+	opacity: 0.55;
 }
 
 .ship-layer-accent .ship-marker-purple {
 	stroke: var(--accent-purple-bright);
 	fill: var(--accent-purple-bright);
-	opacity: 0.75;
+	opacity: 0.45;
 }
 
 .terminal-markings {
@@ -269,29 +278,31 @@ body {
 			rgba(131, 68, 201, 0.025) 120px
 		);
 	opacity: 0.45;
+	background-repeat: repeat;
 	mask-image: radial-gradient(ellipse at 70% 50%, black 0%, transparent 65%);
-	animation: markings-drift 300s linear infinite;
+	will-change: background-position;
+	animation: markings-scroll-xy 70s linear infinite;
 }
 
-@keyframes starfield-drift-far {
+@keyframes starfield-scroll-xy-far {
 	from {
 		background-position: 0 0;
 	}
 	to {
-		background-position: 180px 120px;
+		background-position: 420px 420px;
 	}
 }
 
-@keyframes starfield-drift-near {
+@keyframes starfield-scroll-xy-near {
 	from {
 		background-position: 0 0;
 	}
 	to {
-		background-position: -140px 90px;
+		background-position: -320px 320px;
 	}
 }
 
-@keyframes grid-drift {
+@keyframes grid-scroll-xy {
 	from {
 		background-position: 0 0;
 	}
@@ -300,18 +311,16 @@ body {
 	}
 }
 
-@keyframes plot-shift {
+@keyframes plot-scroll-xy {
 	from {
-		transform: translate3d(0, 0, 0);
-		opacity: 0.65;
+		background-position: 0 0, 0 0;
 	}
 	to {
-		transform: translate3d(6px, -4px, 0);
-		opacity: 0.75;
+		background-position: 200px 200px, -200px 200px;
 	}
 }
 
-@keyframes markings-drift {
+@keyframes markings-scroll-xy {
 	from {
 		background-position: 0 0, 0 0;
 	}
@@ -692,12 +701,28 @@ body {
 	}
 
 	.ship-layer-hull {
-		color: rgba(245, 245, 248, 0.5);
+		color: rgba(245, 245, 248, 0.28);
+	}
+
+	.terminal-ship-schematic {
+		opacity: 0.28;
 	}
 
 	.terminal-grid {
 		opacity: 0.65;
-		animation-duration: 360s;
+		animation-duration: 70s;
+	}
+
+	.terminal-starfield-far {
+		animation-duration: 90s;
+	}
+
+	.terminal-plot-lines {
+		animation-duration: 85s;
+	}
+
+	.terminal-markings {
+		animation-duration: 100s;
 	}
 
 	.nav-rotate-slow {
@@ -719,6 +744,7 @@ body {
 	.terminal-grid,
 	.terminal-plot-lines,
 	.terminal-markings,
+	.nav-geometry-wrap,
 	.nav-rotate-slow,
 	.nav-rotate-reverse,
 	.nav-rotate-sweep,
