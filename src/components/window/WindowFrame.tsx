@@ -268,7 +268,7 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 	return (
 		<div
 			ref={frameRef}
-			className={`flex flex-col overflow-hidden border bg-[#ececf0] terminal-bevel ${
+			className={`module-workspace flex flex-col overflow-hidden border terminal-bevel ${
 				win.isFocused
 					? 'window-shadow-focused border-[rgba(176,120,240,0.85)]'
 					: 'window-shadow border-[var(--border-silver-bright)]'
@@ -347,7 +347,7 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 					</button>
 				</div>
 			</div>
-			<div className="min-h-0 flex-1 overflow-hidden bg-[#ececf0]">
+			<div className="module-workspace min-h-0 flex-1 overflow-hidden">
 				{AppComponent && <AppComponent windowId={win.id} appId={win.appId} />}
 			</div>
 			{renderResizeHandle('n', 'top-0 left-2 right-2 h-1 cursor-n-resize')}
