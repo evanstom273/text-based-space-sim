@@ -6,13 +6,21 @@ import { formatDisplayShipName } from '../../utils/profileRandomizer';
 interface AuthTransitionProps {
 	profile: CommandProfile;
 	mode: AuthMode;
+	fadingOut?: boolean;
+	onRevealDesktop?: () => void;
 	onComplete: () => void;
 }
 
 const ENTER_DURATION_MS = 2400;
 const EXIT_DURATION_MS = 1800;
 
-export function AuthTransition({ profile, mode, onComplete }: AuthTransitionProps) {
+export function AuthTransition({
+	profile,
+	mode,
+	fadingOut = false,
+	onRevealDesktop,
+	onComplete,
+}: AuthTransitionProps) {
 	const [visibleLines, setVisibleLines] = useState(0);
 	const [phaseStep, setPhaseStep] = useState(0);
 
@@ -63,18 +71,25 @@ export function AuthTransition({ profile, mode, onComplete }: AuthTransitionProp
 
 		timers.push(
 			window.setTimeout(() => setPhaseStep(1), duration * 0.55),
-			window.setTimeout(() => setPhaseStep(2), duration * 0.75),
+			window.setTimeout(() => {
+				setPhaseStep(2);
+				if (mode !== 'exit') {
+					onRevealDesktop?.();
+				}
+			}, duration * 0.72),
 			window.setTimeout(onComplete, duration),
 		);
 
 		return () => timers.forEach((timer) => window.clearTimeout(timer));
-	}, [duration, lines.length, onComplete]);
+	}, [duration, lines.length, mode, onComplete, onRevealDesktop]);
 
 	return (
-		<div className={`game-screen auth-screen auth-screen--${mode}`}>
-			<div className={`auth-overlay ${phaseStep >= 1 ? 'auth-overlay--active' : ''}`} />
+		<div
+			className={`game-screen auth-screen auth-screen--${mode} ${fadingOut ? 'auth-screen--exit' : ''} ${phaseStep >= 1 ? 'auth-screen--scan' : ''}`}
+		>
+			<div className="auth-overlay auth-overlay--base" />
 
-			<div className="auth-content">
+			<div className={`auth-content ${fadingOut ? 'auth-content--exit' : ''}`}>
 				<div className={`auth-insignia ${phaseStep >= 0 ? 'auth-insignia--pulse' : ''}`}>
 					<ShipInsignia size={48} className="text-[var(--accent-gold-bright)]" />
 				</div>
@@ -89,13 +104,7 @@ export function AuthTransition({ profile, mode, onComplete }: AuthTransitionProp
 				</div>
 			</div>
 
-			<div className={`auth-desktop-reveal ${phaseStep >= 2 && mode !== 'exit' ? 'auth-desktop-reveal--active' : ''}`}>
-				<div className="auth-reveal-bar auth-reveal-bar--status" />
-				<div className="auth-reveal-workspace" />
-				<div className="auth-reveal-bar auth-reveal-bar--taskbar" />
-			</div>
-
-			{phaseStep >= 1 ? <div className="auth-scanline" aria-hidden="true" /> : null}
+			{phaseStep >= 1 && !fadingOut ? <div className="auth-scanline" aria-hidden="true" /> : null}
 		</div>
 	);
 }
