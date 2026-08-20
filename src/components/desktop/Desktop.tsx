@@ -25,7 +25,7 @@ export function ShipStatusBar() {
 	}, []);
 
 	return (
-		<header className="terminal-chrome terminal-chrome-top relative z-[600] flex h-12 shrink-0 items-stretch px-0 text-[11px] text-[var(--text-silver)]">
+		<header className="terminal-chrome terminal-chrome-top relative z-[600] flex h-14 shrink-0 items-stretch px-0 text-[11px] text-[var(--text-silver)]">
 			<div className="ship-identity-block terminal-bevel-sm flex items-center gap-3 px-3 sm:gap-4 sm:px-4">
 				<div className="insignia-frame terminal-bevel-sm flex h-9 w-9 shrink-0 items-center justify-center">
 					<ShipInsignia size={22} />
@@ -95,7 +95,7 @@ export function Desktop() {
 	return (
 		<div className="relative flex h-screen w-screen flex-col overflow-hidden bg-terminal-pattern select-none">
 			<ShipStatusBar />
-			<div className="relative min-h-0 flex-1">
+			<div className="relative min-h-0 flex-1 terminal-workspace">
 				<TerminalBackground />
 				<DesktopIconGrid />
 				<div className="pointer-events-none absolute inset-0">

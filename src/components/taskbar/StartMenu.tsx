@@ -58,7 +58,7 @@ export function StartMenu({ isOpen, onClose }: StartMenuProps) {
 	};
 
 	return (
-		<div className="absolute bottom-[64px] left-2 z-[1000] w-[min(440px,calc(100vw-16px))] animate-fadeIn overflow-hidden border border-[rgba(176,120,240,0.35)] bg-[#242424] shadow-2xl shadow-black/70 terminal-bevel">
+		<div className="absolute bottom-[68px] left-2 z-[1000] w-[min(440px,calc(100vw-16px))] animate-fadeIn overflow-hidden border border-[rgba(176,120,240,0.35)] bg-[#242424] shadow-2xl shadow-black/70 terminal-bevel">
 			<div className="border-b border-[var(--border-silver)] bg-gradient-to-r from-[#2a2a2a] to-[#222222] px-4 py-3">
 				<div className="flex items-center gap-2.5">
 					<div className="text-[var(--accent-gold)]">

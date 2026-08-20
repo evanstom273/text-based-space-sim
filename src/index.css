@@ -54,8 +54,14 @@ body {
 
 .terminal-atmosphere {
 	background:
-		radial-gradient(ellipse at 68% 52%, rgba(131, 68, 201, 0.14) 0%, rgba(131, 68, 201, 0.04) 32%, transparent 58%),
-		radial-gradient(ellipse at 18% 28%, rgba(240, 240, 244, 0.03) 0%, transparent 45%);
+		radial-gradient(ellipse at 68% 52%, rgba(131, 68, 201, 0.24) 0%, rgba(131, 68, 201, 0.08) 35%, transparent 62%),
+		radial-gradient(ellipse at 18% 28%, rgba(240, 240, 244, 0.06) 0%, transparent 45%);
+}
+
+.terminal-workspace {
+	box-shadow:
+		inset 0 0 100px rgba(131, 68, 201, 0.07),
+		inset 0 1px 0 rgba(176, 120, 240, 0.08);
 }
 
 .terminal-grid {
@@ -98,50 +104,50 @@ body {
 
 .terminal-ship-glow {
 	position: absolute;
-	right: 8%;
+	right: 6%;
 	top: 50%;
-	width: min(52vw, 520px);
-	height: min(68vh, 620px);
+	width: min(58vw, 580px);
+	height: min(74vh, 660px);
 	transform: translateY(-50%);
 	background: radial-gradient(
 		ellipse at center,
-		rgba(131, 68, 201, 0.16) 0%,
-		rgba(131, 68, 201, 0.06) 38%,
-		transparent 68%
+		rgba(131, 68, 201, 0.32) 0%,
+		rgba(131, 68, 201, 0.12) 40%,
+		transparent 72%
 	);
-	filter: blur(2px);
+	filter: blur(4px);
 }
 
 .terminal-ship-schematic {
 	position: relative;
-	width: min(58vw, 560px);
-	height: min(72vh, 640px);
-	color: rgba(240, 240, 244, 0.28);
-	filter: drop-shadow(0 0 18px rgba(131, 68, 201, 0.12));
+	width: min(62vw, 600px);
+	height: min(76vh, 680px);
+	color: rgba(240, 240, 244, 0.48);
+	filter: drop-shadow(0 0 28px rgba(131, 68, 201, 0.22));
 }
 
 .ship-layer-hull {
-	color: rgba(240, 240, 244, 0.32);
+	color: rgba(245, 245, 248, 0.62);
 }
 
 .ship-layer-nacelles {
-	color: rgba(240, 240, 244, 0.26);
+	color: rgba(240, 240, 244, 0.48);
 }
 
 .ship-layer-radar {
-	color: rgba(176, 120, 240, 0.14);
+	color: rgba(176, 120, 240, 0.1);
 }
 
 .ship-layer-accent .ship-marker-gold {
-	stroke: var(--accent-gold);
-	fill: var(--accent-gold);
-	opacity: 0.55;
+	stroke: var(--accent-gold-bright);
+	fill: var(--accent-gold-bright);
+	opacity: 0.85;
 }
 
 .ship-layer-accent .ship-marker-purple {
 	stroke: var(--accent-purple-bright);
 	fill: var(--accent-purple-bright);
-	opacity: 0.45;
+	opacity: 0.75;
 }
 
 .terminal-radar {
@@ -187,16 +193,17 @@ body {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	height: 1px;
+	height: 2px;
 	background: linear-gradient(
 		90deg,
 		transparent 0%,
-		var(--accent-purple) 18%,
-		rgba(176, 120, 240, 0.6) 50%,
-		var(--accent-purple) 82%,
+		var(--accent-purple) 12%,
+		rgba(176, 120, 240, 0.9) 50%,
+		var(--accent-purple) 88%,
 		transparent 100%
 	);
-	opacity: 0.55;
+	opacity: 0.85;
+	box-shadow: 0 0 12px rgba(131, 68, 201, 0.4);
 	pointer-events: none;
 }
 
@@ -223,12 +230,12 @@ body {
 
 .terminal-dock {
 	position: relative;
-	background: linear-gradient(180deg, #242424 0%, #1a1a1a 55%, #141414 100%);
-	border-top: 1px solid rgba(240, 240, 244, 0.14);
+	background: linear-gradient(180deg, #282828 0%, #1c1c1c 50%, #121212 100%);
+	border-top: 1px solid rgba(176, 120, 240, 0.25);
 	box-shadow:
-		inset 0 1px 0 rgba(255, 255, 255, 0.06),
-		0 -4px 24px rgba(0, 0, 0, 0.5),
-		0 -1px 0 rgba(131, 68, 201, 0.2);
+		inset 0 1px 0 rgba(255, 255, 255, 0.08),
+		0 -6px 32px rgba(0, 0, 0, 0.55),
+		0 -2px 24px rgba(131, 68, 201, 0.18);
 }
 
 .terminal-dock::before {
@@ -237,15 +244,16 @@ body {
 	top: 0;
 	left: 0;
 	right: 0;
-	height: 1px;
+	height: 2px;
 	background: linear-gradient(
 		90deg,
 		transparent 0%,
-		rgba(131, 68, 201, 0.45) 25%,
-		rgba(176, 120, 240, 0.55) 50%,
-		rgba(131, 68, 201, 0.45) 75%,
+		rgba(131, 68, 201, 0.65) 20%,
+		rgba(176, 120, 240, 0.95) 50%,
+		rgba(131, 68, 201, 0.65) 80%,
 		transparent 100%
 	);
+	box-shadow: 0 0 16px rgba(131, 68, 201, 0.45);
 }
 
 .terminal-chrome-inset {
@@ -304,28 +312,31 @@ body {
 }
 
 .ship-identity-block {
-	background: linear-gradient(135deg, rgba(131, 68, 201, 0.08) 0%, rgba(212, 180, 90, 0.06) 100%);
-	border: 1px solid rgba(176, 120, 240, 0.22);
+	background: linear-gradient(135deg, rgba(131, 68, 201, 0.16) 0%, rgba(212, 180, 90, 0.1) 100%);
+	border: 1px solid rgba(176, 120, 240, 0.45);
 	box-shadow:
-		inset 0 0 20px rgba(131, 68, 201, 0.08),
-		0 0 16px rgba(131, 68, 201, 0.06);
+		inset 0 0 28px rgba(131, 68, 201, 0.12),
+		0 0 24px rgba(131, 68, 201, 0.1);
 }
 
 .insignia-frame {
-	background: linear-gradient(145deg, #2a2a2a 0%, #181818 100%);
-	border: 1px solid rgba(212, 180, 90, 0.45);
+	background: linear-gradient(145deg, #333333 0%, #1a1a1a 100%);
+	border: 1px solid rgba(232, 204, 120, 0.75);
 	box-shadow:
-		inset 0 0 12px rgba(212, 180, 90, 0.08),
-		0 0 10px rgba(131, 68, 201, 0.12);
+		inset 0 0 16px rgba(212, 180, 90, 0.15),
+		0 0 18px rgba(212, 180, 90, 0.2),
+		0 0 12px rgba(131, 68, 201, 0.15);
 	color: var(--accent-gold-bright);
 }
 
 .dock-home-btn {
-	background: linear-gradient(145deg, #2e2e2e 0%, #1a1a1a 100%);
-	border: 1px solid rgba(212, 180, 90, 0.4);
+	background: linear-gradient(145deg, #353535 0%, #1a1a1a 100%);
+	border: 1px solid rgba(232, 204, 120, 0.7);
+	color: var(--accent-gold-bright);
 	box-shadow:
-		inset 0 1px 0 rgba(255, 255, 255, 0.08),
-		0 0 14px rgba(131, 68, 201, 0.1);
+		inset 0 1px 0 rgba(255, 255, 255, 0.1),
+		0 0 18px rgba(212, 180, 90, 0.2),
+		0 0 12px rgba(131, 68, 201, 0.12);
 }
 
 .dock-home-btn--active {
@@ -358,13 +369,14 @@ body {
 	justify-content: center;
 	width: 48px;
 	height: 48px;
-	background: linear-gradient(155deg, #343434 0%, #222222 55%, #181818 100%);
-	border: 1px solid rgba(240, 240, 244, 0.22);
+	background: linear-gradient(155deg, #3a3a3a 0%, #242424 55%, #1a1a1a 100%);
+	border: 1px solid rgba(176, 120, 240, 0.28);
 	box-shadow:
-		inset 0 1px 0 rgba(255, 255, 255, 0.1),
-		inset 0 -2px 6px rgba(0, 0, 0, 0.35),
+		inset 0 1px 0 rgba(255, 255, 255, 0.12),
+		inset 0 0 12px rgba(131, 68, 201, 0.06),
+		0 0 10px rgba(131, 68, 201, 0.08),
 		0 4px 14px rgba(0, 0, 0, 0.4);
-	color: var(--text-silver);
+	color: #ffffff;
 	transition:
 		border-color 0.15s ease,
 		box-shadow 0.15s ease,
@@ -430,9 +442,15 @@ body {
 }
 
 .icon-module-code {
-	color: var(--accent-gold);
-	opacity: 0.75;
-	text-shadow: 0 0 8px rgba(212, 180, 90, 0.25);
+	color: var(--accent-gold-bright);
+	opacity: 1;
+	text-shadow: 0 0 10px rgba(212, 180, 90, 0.45);
+}
+
+.ship-name-glow {
+	text-shadow:
+		0 0 20px rgba(240, 240, 244, 0.25),
+		0 0 32px rgba(131, 68, 201, 0.12);
 }
 
 .window-shadow {
@@ -461,10 +479,6 @@ body {
 	box-shadow: 0 0 10px rgba(110, 231, 160, 0.08);
 }
 
-.ship-name-glow {
-	text-shadow: 0 0 18px rgba(240, 240, 244, 0.15);
-}
-
 @keyframes fadeIn {
 	from {
 		opacity: 0;
@@ -488,19 +502,34 @@ body {
 }
 
 @media (max-width: 639px) {
+	.terminal-ship-wrap {
+		justify-content: center;
+		padding-right: 0;
+	}
+
 	.terminal-ship-schematic {
-		width: 85%;
-		height: 55%;
-		opacity: 0.55;
+		width: 92%;
+		height: 62%;
+		opacity: 1;
 	}
 
 	.terminal-ship-glow {
-		width: 90%;
-		right: 5%;
-		opacity: 0.7;
+		width: 95%;
+		right: 2.5%;
+		opacity: 1;
+	}
+
+	.ship-layer-hull {
+		color: rgba(245, 245, 248, 0.5);
 	}
 
 	.terminal-grid {
-		opacity: 0.55;
+		opacity: 0.65;
+	}
+
+	.terminal-atmosphere {
+		background:
+			radial-gradient(ellipse at 55% 55%, rgba(131, 68, 201, 0.2) 0%, transparent 55%),
+			radial-gradient(ellipse at 18% 28%, rgba(240, 240, 244, 0.05) 0%, transparent 45%);
 	}
 }

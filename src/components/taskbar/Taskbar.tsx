@@ -27,7 +27,7 @@ export function Taskbar() {
 	return (
 		<div ref={taskbarRef} className="relative z-[500] shrink-0">
 			<StartMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
-			<footer className="terminal-dock flex h-[60px] items-stretch px-2 sm:px-3">
+			<footer className="terminal-dock flex h-16 items-stretch px-2 sm:px-3">
 				<div className="flex items-center pr-2 sm:pr-3">
 					<button
 						id="start-menu-button"

@@ -8,7 +8,7 @@ export function ShipSchematic() {
 				fill="none"
 				preserveAspectRatio="xMidYMid meet"
 			>
-				<g className="ship-layer-radar" opacity="0.35">
+				<g className="ship-layer-radar" opacity="0.2">
 					<circle cx="280" cy="260" r="180" stroke="currentColor" strokeWidth="0.6" />
 					<circle cx="280" cy="260" r="130" stroke="currentColor" strokeWidth="0.5" />
 					<circle cx="280" cy="260" r="80" stroke="currentColor" strokeWidth="0.4" />
@@ -17,35 +17,35 @@ export function ShipSchematic() {
 				</g>
 
 				<g className="ship-layer-hull">
-					<ellipse cx="280" cy="118" rx="72" ry="34" stroke="currentColor" strokeWidth="1.4" />
-					<ellipse cx="280" cy="118" rx="48" ry="18" stroke="currentColor" strokeWidth="0.7" opacity="0.65" />
+					<ellipse cx="280" cy="118" rx="72" ry="34" stroke="currentColor" strokeWidth="1.8" />
+					<ellipse cx="280" cy="118" rx="48" ry="18" stroke="currentColor" strokeWidth="0.9" opacity="0.75" />
 					<path
 						d="M280 152 L280 198"
 						stroke="currentColor"
-						strokeWidth="1.2"
+						strokeWidth="1.5"
 					/>
 					<path
 						d="M248 198 L312 198 L318 230 L242 230 Z"
 						stroke="currentColor"
-						strokeWidth="1.3"
+						strokeWidth="1.6"
 						strokeLinejoin="bevel"
 					/>
 					<path
 						d="M258 230 L258 340 L302 340 L302 230"
 						stroke="currentColor"
-						strokeWidth="1.2"
+						strokeWidth="1.5"
 						strokeLinejoin="bevel"
 					/>
 					<path
 						d="M248 340 L312 340 L300 392 L260 392 Z"
 						stroke="currentColor"
-						strokeWidth="1.3"
+						strokeWidth="1.6"
 						strokeLinejoin="bevel"
 					/>
 					<path
 						d="M260 392 L300 392 L288 430 L272 430 Z"
 						stroke="currentColor"
-						strokeWidth="1.1"
+						strokeWidth="1.4"
 						strokeLinejoin="bevel"
 					/>
 				</g>
