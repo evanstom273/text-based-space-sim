@@ -1,5 +1,6 @@
 import type { AppDefinition } from '../types';
 import { CalendarApp } from '../components/apps/CalendarApp';
+import { CrewRosterApp } from '../components/apps/CrewRosterApp';
 import { ModulePlaceholderApp } from '../components/apps/ModulePlaceholderApp';
 import { SettingsApp } from '../components/apps/SettingsApp';
 
@@ -41,10 +42,10 @@ export const APP_REGISTRY: Record<string, AppDefinition> = {
 		category: 'Records',
 		badgeCode: 'REC-01',
 		icon: 'users',
-		defaultSize: { width: 760, height: 540 },
+		defaultSize: { width: 820, height: 580 },
 		minSize: { width: 480, height: 360 },
 		defaultGridPos: { row: 1, col: 0 },
-		component: ModulePlaceholderApp,
+		component: CrewRosterApp,
 	},
 	'ship-status': {
 		id: 'ship-status',
@@ -79,7 +80,8 @@ export const APP_REGISTRY: Record<string, AppDefinition> = {
 		name: 'CALENDAR',
 		shortName: 'Calendar',
 		subtitle: 'Ship chronology planner',
-		description: 'Browse ship dates by month, simulate forward through chrono cycles, and schedule future events.',
+		description:
+			'Browse ship dates by month, simulate forward through chrono cycles, and schedule future events.',
 		category: 'Navigation',
 		badgeCode: 'NAV-02',
 		icon: 'calendar',
@@ -107,7 +109,7 @@ export const APP_REGISTRY: Record<string, AppDefinition> = {
 		name: 'LOGS',
 		shortName: 'Logs',
 		subtitle: 'Ship record archive',
-		description: 'Browse captain\'s logs, incident reports, and official ship documentation.',
+		description: "Browse captain's logs, incident reports, and official ship documentation.",
 		category: 'Records',
 		badgeCode: 'REC-02',
 		icon: 'logs',

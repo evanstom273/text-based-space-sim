@@ -98,11 +98,15 @@ export function verifyPersonnelFoundation(): PersonnelFoundationReport {
 		}
 	}
 
-	const requiredSpecies = ['human', 'moclan', 'xelayan', 'kaylon'] as const;
+	const requiredSpecies = [...SPECIES_IDS] as const;
 	for (const id of requiredSpecies) {
 		if (!SPECIES[id]) {
 			errors.push(`Required species missing: ${id}`);
 		}
+	}
+
+	if (SPECIES_IDS.length < 10) {
+		errors.push(`Expected at least 10 species, found ${SPECIES_IDS.length}.`);
 	}
 
 	if (SENIOR_STAFF_POSITION_IDS.length !== 6) {
