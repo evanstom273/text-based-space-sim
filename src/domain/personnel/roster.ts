@@ -1,5 +1,5 @@
 import type { PositionId } from './positions';
-import { SENIOR_STAFF_POSITION_IDS } from './positions';
+import { POSITIONS, SENIOR_STAFF_POSITION_IDS } from './positions';
 import type { PersonnelRecord } from './personnel';
 import { PERSONNEL_SCHEMA_VERSION } from './constants';
 
@@ -57,4 +57,66 @@ export function upsertPersonnel(
 		...roster,
 		personnel: [...without, person],
 	};
+}
+
+export interface RosterListEntry {
+	person: PersonnelRecord;
+	roleLabel: string;
+	isCaptain: boolean;
+	isSeniorStaff: boolean;
+	isSecondOfficer: boolean;
+}
+
+/**
+ * Ordered personnel for the Crew Roster module:
+ * Captain first, then senior staff in slot order, then any remaining personnel.
+ */
+export function listRosterForDisplay(roster: CrewRosterState): RosterListEntry[] {
+	const entries: RosterListEntry[] = [];
+	const seen = new Set<string>();
+
+	const captain = roster.captainPersonnelId
+		? findPersonnelById(roster, roster.captainPersonnelId)
+		: undefined;
+
+	if (captain) {
+		seen.add(captain.id);
+		entries.push({
+			person: captain,
+			roleLabel: 'Captain',
+			isCaptain: true,
+			isSeniorStaff: false,
+			isSecondOfficer: false,
+		});
+	}
+
+	for (const positionId of INITIAL_SENIOR_STAFF_SLOTS) {
+		const personnelId = roster.seniorStaff.byPosition[positionId];
+		if (!personnelId || seen.has(personnelId)) continue;
+		const person = findPersonnelById(roster, personnelId);
+		if (!person) continue;
+		seen.add(person.id);
+		const isSecondOfficer = roster.seniorStaff.secondOfficerPersonnelId === person.id;
+		entries.push({
+			person,
+			roleLabel: POSITIONS[positionId]?.name ?? positionId,
+			isCaptain: false,
+			isSeniorStaff: true,
+			isSecondOfficer,
+		});
+	}
+
+	for (const person of roster.personnel) {
+		if (seen.has(person.id)) continue;
+		seen.add(person.id);
+		entries.push({
+			person,
+			roleLabel: POSITIONS[person.positionId]?.name ?? 'Crew',
+			isCaptain: false,
+			isSeniorStaff: false,
+			isSecondOfficer: roster.seniorStaff.secondOfficerPersonnelId === person.id,
+		});
+	}
+
+	return entries;
 }

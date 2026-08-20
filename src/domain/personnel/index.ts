@@ -147,8 +147,10 @@ export {
 	createEmptyCrewRoster,
 	findPersonnelById,
 	upsertPersonnel,
+	listRosterForDisplay,
 	type SeniorStaffState,
 	type CrewRosterState,
+	type RosterListEntry,
 } from './roster';
 
 export {

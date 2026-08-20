@@ -126,7 +126,7 @@ function weightedPick<T extends string>(items: ReadonlyArray<{ rankId?: T; id?: 
 	return (last?.rankId ?? last?.id) as T;
 }
 
-function pickSpecies(): SpeciesId {
+function pickSpeciesForCrew(): SpeciesId {
 	const eligible = getUnionCrewEligibleSpecies();
 	const weighted = eligible.map((species) => ({
 		id: species.id,
@@ -196,7 +196,7 @@ export function generateSeniorStaffCandidate(positionId: PositionId): PersonnelR
 	}
 
 	const position = getPosition(positionId);
-	const speciesId = pickSpecies();
+	const speciesId = pickSpeciesForCrew();
 	const gender = pickGenderForSpecies(speciesId);
 	const identity = generatePersonnelName(speciesId, gender);
 	const rankId = weightedPick(bias.rankWeights);
