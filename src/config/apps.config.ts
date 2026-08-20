@@ -1,5 +1,6 @@
 import type { AppDefinition } from '../types';
 import { ModulePlaceholderApp } from '../components/apps/ModulePlaceholderApp';
+import { SettingsApp } from '../components/apps/SettingsApp';
 
 export const APP_REGISTRY: Record<string, AppDefinition> = {
 	comms: {
@@ -112,7 +113,7 @@ export const APP_REGISTRY: Record<string, AppDefinition> = {
 		defaultSize: { width: 640, height: 480 },
 		minSize: { width: 400, height: 320 },
 		defaultGridPos: { row: 3, col: 1 },
-		component: ModulePlaceholderApp,
+		component: SettingsApp,
 	},
 };
 

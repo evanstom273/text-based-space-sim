@@ -1,10 +1,13 @@
 import { WindowManagerProvider } from './context/WindowManagerContext';
+import { ClockProvider } from './context/ClockContext';
 import { Desktop } from './components/desktop/Desktop';
 
 export function App() {
 	return (
 		<WindowManagerProvider>
-			<Desktop />
+			<ClockProvider>
+				<Desktop />
+			</ClockProvider>
 		</WindowManagerProvider>
 	);
 }

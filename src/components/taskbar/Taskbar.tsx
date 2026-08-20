@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bell, Volume2 } from 'lucide-react';
 import { useWindowManager } from '../../context/WindowManagerContext';
+import { useIsPortraitMobile } from '../../hooks/useIsPortraitMobile';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 import { ShipInsignia } from '../common/ShipInsignia';
 import { StartMenu } from './StartMenu';
@@ -8,6 +9,7 @@ import { SystemTray } from './SystemTray';
 
 export function Taskbar() {
 	const { windows, toggleMinimizeWindow, activeWindowId } = useWindowManager();
+	const isPortraitMobile = useIsPortraitMobile();
 	const [menuOpen, setMenuOpen] = useState(false);
 	const taskbarRef = useRef<HTMLDivElement>(null);
 
@@ -25,9 +27,9 @@ export function Taskbar() {
 	}, [menuOpen]);
 
 	return (
-		<div ref={taskbarRef} className="relative z-[500] shrink-0">
+		<div ref={taskbarRef} className="taskbar-root relative z-[500] shrink-0">
 			<StartMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
-			<footer className="terminal-dock flex h-16 items-stretch px-2 sm:px-3">
+			<footer className="terminal-dock taskbar-dock flex h-16 items-stretch px-2 sm:px-3">
 				<div className="flex items-center pr-2 sm:pr-3">
 					<button
 						id="start-menu-button"
@@ -37,6 +39,7 @@ export function Taskbar() {
 						}`}
 						onClick={() => setMenuOpen((open) => !open)}
 						aria-label="Terminal modules"
+						aria-expanded={menuOpen}
 					>
 						<ShipInsignia size={22} className={menuOpen ? 'text-[var(--accent-purple-bright)]' : ''} />
 					</button>
@@ -47,7 +50,7 @@ export function Taskbar() {
 				<div className="terminal-chrome-inset terminal-bevel-sm my-2 flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto border px-2 no-scrollbar">
 					{windows.length === 0 && (
 						<span className="px-2 font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--text-silver-dim)]">
-							No active modules
+							{isPortraitMobile ? 'Tap insignia to launch modules' : 'No active modules'}
 						</span>
 					)}
 					{windows.map((win) => {
@@ -58,10 +61,12 @@ export function Taskbar() {
 							<button
 								key={win.id}
 								type="button"
-								className={`dock-tab terminal-bevel-sm flex h-10 max-w-[200px] shrink-0 items-center gap-2 px-3 text-left transition-all ${
-									isActive ? 'dock-tab--active' : ''
-								} ${isMinimised ? 'opacity-55' : ''}`}
+								className={`dock-tab terminal-bevel-sm flex h-10 shrink-0 items-center gap-2 px-3 text-left transition-all ${
+									isPortraitMobile ? 'w-11 justify-center px-0' : 'max-w-[200px]'
+								} ${isActive ? 'dock-tab--active' : ''} ${isMinimised ? 'opacity-55' : ''}`}
 								onClick={() => toggleMinimizeWindow(win.id)}
+								aria-label={win.title}
+								title={win.title}
 							>
 								<AppIconRenderer
 									icon={win.icon}
@@ -70,20 +75,24 @@ export function Taskbar() {
 										isActive ? 'text-[var(--accent-purple-bright)]' : 'text-[var(--text-silver)]'
 									}`}
 								/>
-								<span
-									className={`truncate text-[10px] font-semibold uppercase tracking-[0.12em] ${
-										isActive ? 'text-white' : 'text-[var(--text-silver-dim)]'
-									}`}
-								>
-									{win.title}
-								</span>
-								<span
-									className={`ml-auto h-2 w-2 shrink-0 rounded-full ${
-										isActive
-											? 'bg-[var(--accent-purple-bright)] shadow-[0_0_8px_var(--accent-purple-glow)]'
-											: 'bg-[var(--text-silver-dim)]/40'
-									}`}
-								/>
+								{!isPortraitMobile && (
+									<span
+										className={`truncate text-[10px] font-semibold uppercase tracking-[0.12em] ${
+											isActive ? 'text-white' : 'text-[var(--text-silver-dim)]'
+										}`}
+									>
+										{win.title}
+									</span>
+								)}
+								{!isPortraitMobile && (
+									<span
+										className={`ml-auto h-2 w-2 shrink-0 rounded-full ${
+											isActive
+												? 'bg-[var(--accent-purple-bright)] shadow-[0_0_8px_var(--accent-purple-glow)]'
+												: 'bg-[var(--text-silver-dim)]/40'
+										}`}
+									/>
+								)}
 							</button>
 						);
 					})}

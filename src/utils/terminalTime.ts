@@ -8,7 +8,9 @@ export function formatStardate(date: Date): string {
 }
 
 export function formatClock(date: Date): string {
-	return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	const hours = date.getHours().toString().padStart(2, '0');
+	const minutes = date.getMinutes().toString().padStart(2, '0');
+	return `${hours}:${minutes}`;
 }
 
 export function formatShortDate(date: Date): string {
