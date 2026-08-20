@@ -8,6 +8,7 @@ import { Taskbar } from '../taskbar/Taskbar';
 import { ShipInsignia } from '../common/ShipInsignia';
 import { useWindowManager } from '../../context/WindowManagerContext';
 import { formatClock, formatStardate } from '../../utils/terminalTime';
+import { BUILD_ID } from '../../config/buildInfo';
 
 export const SHIP_INFO = {
 	name: 'USS Clements',
@@ -82,6 +83,12 @@ export function ShipStatusBar() {
 					<div className="font-mono text-sm font-medium text-white">{formatClock(now)}</div>
 					<div className="hidden font-mono text-[9px] text-[var(--accent-purple-bright)] sm:block">
 						{formatStardate(now)}
+					</div>
+					<div
+						className="font-mono text-[8px] tracking-wider text-[var(--text-silver-dim)] opacity-50"
+						title="Terminal build — confirms latest deploy loaded"
+					>
+						BLD {BUILD_ID}
 					</div>
 				</div>
 			</div>
