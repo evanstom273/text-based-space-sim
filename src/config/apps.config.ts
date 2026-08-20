@@ -1,4 +1,5 @@
 import type { AppDefinition } from '../types';
+import { CalendarApp } from '../components/apps/CalendarApp';
 import { ModulePlaceholderApp } from '../components/apps/ModulePlaceholderApp';
 import { SettingsApp } from '../components/apps/SettingsApp';
 
@@ -72,6 +73,20 @@ export const APP_REGISTRY: Record<string, AppDefinition> = {
 		minSize: { width: 500, height: 380 },
 		defaultGridPos: { row: 2, col: 0 },
 		component: ModulePlaceholderApp,
+	},
+	calendar: {
+		id: 'calendar',
+		name: 'CALENDAR',
+		shortName: 'Calendar',
+		subtitle: 'Ship chronology planner',
+		description: 'Browse ship dates by month, simulate forward through chrono cycles, and schedule future events.',
+		category: 'Navigation',
+		badgeCode: 'NAV-02',
+		icon: 'calendar',
+		defaultSize: { width: 760, height: 620 },
+		minSize: { width: 420, height: 480 },
+		defaultGridPos: { row: 2, col: 2 },
+		component: CalendarApp,
 	},
 	science: {
 		id: 'science',

@@ -16,9 +16,23 @@ export interface ShipCalendarDate {
 	monthShort: string;
 	day: number;
 	dayOfYear: number;
+	monthIndex: number;
 }
 
-const MONTHS = [
+export interface CalendarMonthCell {
+	absoluteDay: number | null;
+	day: number | null;
+	inMonth: boolean;
+}
+
+export interface CalendarEventMarker {
+	id: string;
+	absoluteDay: number;
+	title: string;
+	kind: 'event' | 'deadline';
+}
+
+export const MONTHS = [
 	{ name: 'January', short: 'Jan', days: 31 },
 	{ name: 'February', short: 'Feb', days: 28 },
 	{ name: 'March', short: 'Mar', days: 31 },
@@ -50,12 +64,14 @@ export function absoluteDayToCalendar(absoluteDay: number): ShipCalendarDate {
 
 	for (const month of MONTHS) {
 		if (remaining < month.days) {
+			const monthIndex = MONTHS.findIndex((entry) => entry.name === month.name);
 			return {
 				year,
 				month: month.name,
 				monthShort: month.short,
 				day: remaining + 1,
 				dayOfYear: dayOfYearIndex + 1,
+				monthIndex: monthIndex >= 0 ? monthIndex : 0,
 			};
 		}
 		remaining -= month.days;
@@ -67,7 +83,61 @@ export function absoluteDayToCalendar(absoluteDay: number): ShipCalendarDate {
 		monthShort: 'Dec',
 		day: 31,
 		dayOfYear: DAYS_PER_YEAR,
+		monthIndex: 11,
 	};
+}
+
+export function calendarPartsToAbsoluteDay(year: number, monthIndex: number, day: number): number {
+	let absoluteDay = 0;
+	let currentYear = SHIP_EPOCH_YEAR;
+
+	while (currentYear < year) {
+		absoluteDay += DAYS_PER_YEAR;
+		currentYear += 1;
+	}
+
+	for (let index = 0; index < monthIndex; index += 1) {
+		absoluteDay += MONTHS[index]?.days ?? 0;
+	}
+
+	return absoluteDay + (day - 1);
+}
+
+export function getWeekdayIndex(year: number, monthIndex: number, day: number): number {
+	return new Date(year, monthIndex, day).getDay();
+}
+
+export function buildMonthGrid(year: number, monthIndex: number): CalendarMonthCell[] {
+	const month = MONTHS[monthIndex];
+	if (!month) return [];
+
+	const firstWeekday = getWeekdayIndex(year, monthIndex, 1);
+	const cells: CalendarMonthCell[] = [];
+
+	for (let index = 0; index < firstWeekday; index += 1) {
+		cells.push({ absoluteDay: null, day: null, inMonth: false });
+	}
+
+	for (let day = 1; day <= month.days; day += 1) {
+		cells.push({
+			absoluteDay: calendarPartsToAbsoluteDay(year, monthIndex, day),
+			day,
+			inMonth: true,
+		});
+	}
+
+	while (cells.length % 7 !== 0) {
+		cells.push({ absoluteDay: null, day: null, inMonth: false });
+	}
+
+	return cells;
+}
+
+export function isSameCalendarDay(
+	a: ShipCalendarDate,
+	b: ShipCalendarDate,
+): boolean {
+	return a.year === b.year && a.monthIndex === b.monthIndex && a.day === b.day;
 }
 
 export function calendarToShipDate(absoluteDay: number, minutesInDay: number): Date {

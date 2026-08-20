@@ -1,5 +1,6 @@
 import {
 	BookOpen,
+	Calendar,
 	Compass,
 	FileText,
 	MessageSquare,
@@ -17,6 +18,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 	users: Users,
 	shield: Shield,
 	compass: Compass,
+	calendar: Calendar,
 	microscope: BookOpen,
 	scroll: ScrollText,
 	logs: FileText,
