@@ -10,15 +10,19 @@ import {
 import {
 	absoluteDayToCalendar,
 	calendarToShipDate,
-	DEFAULT_TICK_INTERVAL_SECONDS,
 	MAX_TICK_INTERVAL_SECONDS,
 	MIN_TICK_INTERVAL_SECONDS,
 	MINUTES_PER_CHRONO_TICK,
 	MINUTES_PER_DAY,
-	SHIP_DAY_START_MINUTES,
 	type ShipCalendarDate,
 	type TimeSpeedMultiplier,
 } from '../utils/shipCalendar';
+import {
+	getDefaultShipState,
+	loadPersistedShipState,
+	savePersistedShipState,
+	type ShipStateSnapshot,
+} from '../utils/shipPersistence';
 
 interface ClockContextValue {
 	shipTime: Date;
@@ -33,17 +37,49 @@ interface ClockContextValue {
 	togglePause: () => void;
 	dayEndPending: boolean;
 	acknowledgeDayEnd: () => void;
+	persistenceReady: boolean;
 }
 
 const ClockContext = createContext<ClockContextValue | undefined>(undefined);
 
+function resolveInitialState(): ShipStateSnapshot {
+	return loadPersistedShipState() ?? getDefaultShipState();
+}
+
 export function ClockProvider({ children }: { children: ReactNode }) {
-	const [absoluteDay, setAbsoluteDay] = useState(0);
-	const [minutesInDay, setMinutesInDay] = useState(SHIP_DAY_START_MINUTES);
-	const [tickIntervalSeconds, setTickIntervalSecondsState] = useState(DEFAULT_TICK_INTERVAL_SECONDS);
-	const [speedMultiplier, setSpeedMultiplier] = useState<TimeSpeedMultiplier>(1);
-	const [paused, setPaused] = useState(false);
-	const [dayEndPending, setDayEndPending] = useState(false);
+	const [initialState] = useState(resolveInitialState);
+	const [persistenceReady, setPersistenceReady] = useState(false);
+	const [absoluteDay, setAbsoluteDay] = useState(initialState.absoluteDay);
+	const [minutesInDay, setMinutesInDay] = useState(initialState.minutesInDay);
+	const [tickIntervalSeconds, setTickIntervalSecondsState] = useState(initialState.tickIntervalSeconds);
+	const [speedMultiplier, setSpeedMultiplier] = useState<TimeSpeedMultiplier>(initialState.speedMultiplier);
+	const [paused, setPaused] = useState(initialState.paused);
+	const [dayEndPending, setDayEndPending] = useState(initialState.dayEndPending);
+
+	useEffect(() => {
+		setPersistenceReady(true);
+	}, []);
+
+	useEffect(() => {
+		if (!persistenceReady) return;
+
+		savePersistedShipState({
+			absoluteDay,
+			minutesInDay,
+			tickIntervalSeconds,
+			speedMultiplier,
+			paused,
+			dayEndPending,
+		});
+	}, [
+		persistenceReady,
+		absoluteDay,
+		minutesInDay,
+		tickIntervalSeconds,
+		speedMultiplier,
+		paused,
+		dayEndPending,
+	]);
 
 	useEffect(() => {
 		if (paused || dayEndPending) return;
@@ -53,9 +89,10 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 			setMinutesInDay((current) => {
 				const next = current + MINUTES_PER_CHRONO_TICK;
 				if (next >= MINUTES_PER_DAY) {
+					setAbsoluteDay((day) => day + 1);
 					setDayEndPending(true);
 					setPaused(true);
-					return MINUTES_PER_DAY - MINUTES_PER_CHRONO_TICK;
+					return 0;
 				}
 				return next;
 			});
@@ -78,8 +115,6 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 	}, [dayEndPending]);
 
 	const acknowledgeDayEnd = useCallback(() => {
-		setAbsoluteDay((current) => current + 1);
-		setMinutesInDay(SHIP_DAY_START_MINUTES);
 		setDayEndPending(false);
 		setPaused(false);
 	}, []);
@@ -104,6 +139,7 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 			togglePause,
 			dayEndPending,
 			acknowledgeDayEnd,
+			persistenceReady,
 		}),
 		[
 			shipTime,
@@ -115,6 +151,7 @@ export function ClockProvider({ children }: { children: ReactNode }) {
 			togglePause,
 			dayEndPending,
 			acknowledgeDayEnd,
+			persistenceReady,
 		],
 	);
 
