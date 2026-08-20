@@ -12,16 +12,13 @@ import { useShipClock } from '../../context/ClockContext';
 import { formatClock } from '../../utils/terminalTime';
 import { formatShipDate, formatShipStardate } from '../../utils/shipCalendar';
 import { BUILD_ID } from '../../config/buildInfo';
-
-export const SHIP_INFO = {
-	name: 'USS Clements',
-	registry: 'ECV-1987',
-	location: 'Epsilon Eridani Sector',
-	alertStatus: 'Nominal',
-} as const;
+import { useActiveCommandProfile } from '../../context/GameSessionContext';
+import { formatDisplayShipName } from '../../utils/profileRandomizer';
 
 export function ShipStatusBar() {
 	const { shipTime, calendarDate } = useShipClock();
+	const profile = useActiveCommandProfile();
+	const shipName = formatDisplayShipName(profile.vessel.name);
 
 	return (
 		<header className="terminal-chrome terminal-chrome-top relative z-[600] flex h-14 shrink-0 items-stretch px-0 text-[11px] text-[var(--text-silver)]">
@@ -31,10 +28,10 @@ export function ShipStatusBar() {
 				</div>
 				<div className="min-w-0 leading-tight">
 					<div className="ship-name-glow truncate text-sm font-bold uppercase tracking-[0.14em] text-white sm:text-base">
-						{SHIP_INFO.name}
+						{shipName}
 					</div>
 					<div className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold)]">
-						{SHIP_INFO.registry}
+						{profile.vessel.registry}
 					</div>
 				</div>
 			</div>
@@ -54,7 +51,7 @@ export function ShipStatusBar() {
 
 			<div className="hidden min-w-0 flex-1 items-center justify-center px-4 lg:flex">
 				<span className="truncate font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--text-silver-dim)]">
-					{SHIP_INFO.location}
+					{profile.vessel.location}
 				</span>
 			</div>
 
@@ -63,7 +60,7 @@ export function ShipStatusBar() {
 			<div className="ml-auto flex items-center gap-2 px-2 sm:gap-3 sm:px-4">
 				<div className="status-nominal hidden items-center gap-1.5 border px-2.5 py-1 sm:flex terminal-bevel-sm">
 					<span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(110,231,160,0.6)]" />
-					<span className="font-mono text-[9px] uppercase tracking-wider">{SHIP_INFO.alertStatus}</span>
+					<span className="font-mono text-[9px] uppercase tracking-wider">{profile.vessel.alertStatus}</span>
 				</div>
 
 				<div className="hidden items-center gap-2.5 text-[var(--text-silver)] md:flex">
