@@ -189,3 +189,61 @@ export {
 	pickGenderForSpecies,
 	formatGenderLabel,
 } from './names';
+
+export {
+	GAME_START_ABSOLUTE_DAY,
+	GAME_START_YEAR,
+	parseDateOfBirth,
+	formatDateOfBirth,
+	getAgeYearsOnAbsoluteDay,
+	buildDateOfBirthForAge,
+	absoluteDayOfNextBirthday,
+	type CalendarBirthDate,
+} from './age';
+
+export {
+	CIVILIAN_ROLE_IDS,
+	CIVILIAN_ROLES,
+	CIVILIAN_ROLE_LIST,
+	getCivilianRole,
+	isCivilianRoleId,
+	type CivilianRoleId,
+	type CivilianRoleDefinition,
+} from './civilianRoles';
+
+export {
+	PROFESSIONAL_RELATIONSHIP_TYPE_IDS,
+	PERSONAL_RELATIONSHIP_TYPE_IDS,
+	RELATIONSHIP_TYPE_IDS,
+	RELATIONSHIP_TYPES,
+	getRelationshipType,
+	isRelationshipTypeId,
+	clampAffinity,
+	upsertDirectedRelationship,
+	linkBidirectionalRelationship,
+	listRelationshipsFrom,
+	listRelationshipsOfType,
+	hasRelationship,
+	type ProfessionalRelationshipTypeId,
+	type PersonalRelationshipTypeId,
+	type RelationshipTypeId,
+	type RelationshipCategory,
+	type RelationshipTypeDefinition,
+	type PersonnelRelationship,
+} from './relationships';
+
+export {
+	replaceRosterRelationships,
+	syncRosterAgesFromDateOfBirth,
+} from './roster';
+
+export {
+	populateShipRoster,
+	createPopulatedCrewRoster,
+	requirePersonnel,
+} from './populationGenerator';
+
+export {
+	validateShipPopulation,
+	type PopulationValidationResult,
+} from './populationValidation';

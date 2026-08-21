@@ -5,11 +5,14 @@ import {
 	type CreateProfileInput,
 	type ProfileStoreData,
 } from '../types/commandProfile';
+import { PERSONNEL_SCHEMA_VERSION } from '../domain/personnel/constants';
+import { createPopulatedCrewRoster } from '../domain/personnel/populationGenerator';
 import {
 	createEmptyCrewRoster,
 	type CrewRosterState,
 } from '../domain/personnel/roster';
 import type { PersonnelRecord } from '../domain/personnel/personnel';
+import type { PersonnelRelationship } from '../domain/personnel/relationships';
 import { randomAssignmentLocation } from './profileRandomizer';
 import {
 	formatDisplayCaptain,
@@ -29,10 +32,35 @@ function createEmptyStore(): ProfileStoreData {
 function sanitizePersonnel(raw: unknown): PersonnelRecord | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const person = raw as PersonnelRecord;
-	if (!person.id || !person.identity?.firstName || !person.speciesId || !person.rankId) {
+	if (!person.id || !person.identity?.firstName || !person.speciesId) {
 		return null;
 	}
-	return person;
+	const kind = person.personnelKind ?? 'union';
+	if (kind === 'union' && !person.rankId) {
+		return null;
+	}
+	return {
+		...person,
+		personnelKind: kind,
+		civilianRoleId: person.civilianRoleId ?? null,
+		rankId: person.rankId ?? null,
+		divisionId: person.divisionId ?? null,
+		positionId: person.positionId ?? null,
+	};
+}
+
+function sanitizeRelationships(raw: unknown): PersonnelRelationship[] {
+	if (!Array.isArray(raw)) return [];
+	return raw.filter((entry): entry is PersonnelRelationship => {
+		if (!entry || typeof entry !== 'object') return false;
+		const relationship = entry as PersonnelRelationship;
+		return Boolean(
+			relationship.id &&
+				relationship.fromPersonnelId &&
+				relationship.toPersonnelId &&
+				relationship.typeId,
+		);
+	});
 }
 
 function sanitizeCrew(raw: unknown): CrewRosterState | undefined {
@@ -45,13 +73,14 @@ function sanitizeCrew(raw: unknown): CrewRosterState | undefined {
 		.filter((entry): entry is PersonnelRecord => entry !== null);
 
 	return {
-		schemaVersion: crew.schemaVersion ?? 1,
+		schemaVersion: PERSONNEL_SCHEMA_VERSION,
 		personnel,
 		captainPersonnelId: crew.captainPersonnelId ?? null,
 		seniorStaff: {
 			byPosition: crew.seniorStaff?.byPosition ?? {},
 			secondOfficerPersonnelId: crew.seniorStaff?.secondOfficerPersonnelId ?? null,
 		},
+		relationships: sanitizeRelationships(crew.relationships),
 	};
 }
 
@@ -136,12 +165,13 @@ function buildCrewRoster(input: CreateProfileInput): CrewRosterState {
 
 	const byPosition: CrewRosterState['seniorStaff']['byPosition'] = {};
 	for (const officer of seniorStaff) {
-		byPosition[officer.positionId] = officer.id;
+		if (officer.positionId) {
+			byPosition[officer.positionId] = officer.id;
+		}
 	}
 
-	const roster = createEmptyCrewRoster();
-	return {
-		...roster,
+	const roster: CrewRosterState = {
+		...createEmptyCrewRoster(),
 		personnel: [captain, ...seniorStaff],
 		captainPersonnelId: captain.id,
 		seniorStaff: {
@@ -149,6 +179,8 @@ function buildCrewRoster(input: CreateProfileInput): CrewRosterState {
 			secondOfficerPersonnelId: input.secondOfficerPersonnelId,
 		},
 	};
+
+	return createPopulatedCrewRoster(roster);
 }
 
 export function createCommandProfile(input: CreateProfileInput): CommandProfile {

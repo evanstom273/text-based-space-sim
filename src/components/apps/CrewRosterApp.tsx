@@ -15,7 +15,9 @@ import {
 	getEffectiveSkillBreakdown,
 	getPosition,
 	getRank,
+	getRelationshipType,
 	getSpecies,
+	listRelationshipsFrom,
 	listRosterForDisplay,
 	POSITION_LIST,
 	PROFESSIONAL_SKILL_IDS,
@@ -27,6 +29,7 @@ import {
 	type EffectiveStatBreakdown,
 	type PersonnelGender,
 	type PersonnelRecord,
+	type PersonnelRelationship,
 	type PositionId,
 	type RankId,
 	type RosterListEntry,
@@ -38,7 +41,7 @@ interface CrewRosterAppProps {
 	appId: string;
 }
 
-type RosterCategory = 'senior_staff' | 'engineering' | 'security' | 'medical' | 'science';
+type RosterCategory = 'senior_staff' | 'engineering' | 'security' | 'medical' | 'science' | 'civilian';
 
 const ROSTER_CATEGORIES: ReadonlyArray<{ id: RosterCategory; label: string }> = [
 	{ id: 'senior_staff', label: 'Senior Staff' },
@@ -46,6 +49,7 @@ const ROSTER_CATEGORIES: ReadonlyArray<{ id: RosterCategory; label: string }> = 
 	{ id: 'security', label: 'Security' },
 	{ id: 'medical', label: 'Medical' },
 	{ id: 'science', label: 'Science' },
+	{ id: 'civilian', label: 'Civilians' },
 ];
 
 const CATEGORY_DIVISION: Partial<Record<RosterCategory, DivisionId>> = {
@@ -105,9 +109,9 @@ function matchesSearch(entry: RosterListEntry, query: string): boolean {
 	}
 
 	const person = entry.person;
-	const rank = getRank(person.rankId);
-	const division = getDivision(person.divisionId);
-	const position = getPosition(person.positionId);
+	const rank = person.rankId ? getRank(person.rankId) : null;
+	const division = person.divisionId ? getDivision(person.divisionId) : null;
+	const position = person.positionId ? getPosition(person.positionId) : null;
 	const species = getSpecies(person.speciesId);
 	const name = formatPersonnelDisplayName(person.identity);
 
@@ -116,13 +120,15 @@ function matchesSearch(entry: RosterListEntry, query: string): boolean {
 		person.identity.firstName,
 		person.identity.lastName,
 		person.identity.middleName ?? '',
-		rank.name,
-		rank.abbreviation,
-		division.name,
-		position.name,
+		rank?.name ?? '',
+		rank?.abbreviation ?? '',
+		division?.name ?? '',
+		position?.name ?? '',
 		species.name,
 		entry.roleLabel,
 		person.commandAppointmentId ?? '',
+		person.personnelKind ?? '',
+		person.civilianRoleId ?? '',
 	]
 		.join(' ')
 		.toLowerCase();
@@ -153,6 +159,9 @@ function matchesFilters(entry: RosterListEntry, filters: RosterFilters): boolean
 function matchesCategory(entry: RosterListEntry, category: RosterCategory): boolean {
 	if (category === 'senior_staff') {
 		return entry.isCaptain || entry.isSeniorStaff;
+	}
+	if (category === 'civilian') {
+		return entry.person.personnelKind === 'civilian';
 	}
 	return entry.person.divisionId === CATEGORY_DIVISION[category];
 }
@@ -210,18 +219,22 @@ function PersonnelProfileView({
 	roleLabel,
 	isCaptain,
 	isSecondOfficer,
+	relationships,
+	personnelById,
 	onBack,
 }: {
 	person: PersonnelRecord;
 	roleLabel: string;
 	isCaptain: boolean;
 	isSecondOfficer: boolean;
+	relationships: readonly PersonnelRelationship[];
+	personnelById: ReadonlyMap<string, PersonnelRecord>;
 	onBack: () => void;
 }) {
 	const species = getSpecies(person.speciesId);
-	const rank = getRank(person.rankId);
-	const division = getDivision(person.divisionId);
-	const position = getPosition(person.positionId);
+	const rank = person.rankId ? getRank(person.rankId) : null;
+	const division = person.divisionId ? getDivision(person.divisionId) : null;
+	const position = person.positionId ? getPosition(person.positionId) : null;
 	const appointment =
 		person.commandAppointmentId != null
 			? getCommandAppointment(person.commandAppointmentId)
@@ -234,6 +247,23 @@ function PersonnelProfileView({
 		: person.positionId === 'first_officer'
 			? 'xo'
 			: 'senior';
+
+	const personRelationships = listRelationshipsFrom(relationships, person.id)
+		.map((relationship) => {
+			const other = personnelById.get(relationship.toPersonnelId);
+			if (!other) return null;
+			const type = getRelationshipType(relationship.typeId);
+			return {
+				id: relationship.id,
+				label: type.name,
+				category: type.category,
+				otherName: formatPersonnelDisplayName(other.identity),
+			};
+		})
+		.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+	const professionalLinks = personRelationships.filter((entry) => entry.category === 'professional');
+	const personalLinks = personRelationships.filter((entry) => entry.category === 'personal');
+
 
 	return (
 		<div className="crew-profile">
@@ -256,21 +286,22 @@ function PersonnelProfileView({
 				<h3 className="crew-dossier-name">{formatPersonnelTitleLine(person)}</h3>
 				<p className="crew-dossier-identity">
 					{species.name}
+					{person.dateOfBirth ? ` · DOB ${person.dateOfBirth}` : ''}
 					{person.ageYears != null ? ` · Age ${person.ageYears}` : ''}
 					{` · ${formatGenderLabel(person.gender)}`}
 				</p>
 				<div className="crew-dossier-grid">
 					<div>
 						<span className="crew-meta-label">Rank</span>
-						<span className="crew-meta-value">{rank.name}</span>
+						<span className="crew-meta-value">{rank?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}</span>
 					</div>
 					<div>
 						<span className="crew-meta-label">Division</span>
-						<span className="crew-meta-value">{division.name}</span>
+						<span className="crew-meta-value">{division?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}</span>
 					</div>
 					<div>
 						<span className="crew-meta-label">Position</span>
-						<span className="crew-meta-value">{position.name}</span>
+						<span className="crew-meta-value">{position?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}</span>
 					</div>
 					{appointment ? (
 						<div>
@@ -321,6 +352,33 @@ function PersonnelProfileView({
 				) : null}
 			</section>
 
+			
+			{professionalLinks.length > 0 ? (
+				<section className="crew-section terminal-bevel-sm">
+					<h4 className="crew-section-title">Professional Relationships</h4>
+					<ul className="crew-relationship-list">
+						{professionalLinks.map((link) => (
+							<li key={link.id}>
+								{link.label}: {link.otherName}
+							</li>
+						))}
+					</ul>
+				</section>
+			) : null}
+
+			{personalLinks.length > 0 ? (
+				<section className="crew-section terminal-bevel-sm">
+					<h4 className="crew-section-title">Personal Relationships</h4>
+					<ul className="crew-relationship-list">
+						{personalLinks.map((link) => (
+							<li key={link.id}>
+								{link.label}: {link.otherName}
+							</li>
+						))}
+					</ul>
+				</section>
+			) : null}
+
 			{!isCaptain ? (
 				<section className="crew-section crew-section--actions terminal-bevel-sm">
 					<h4 className="crew-section-title">Command Actions</h4>
@@ -341,7 +399,7 @@ function RosterEntryButton({
 	onSelect: (id: string) => void;
 }) {
 	const species = getSpecies(entry.person.speciesId);
-	const rank = getRank(entry.person.rankId);
+	const rank = entry.person.rankId ? getRank(entry.person.rankId) : null;
 	const accent = getHierarchyAccent(entry);
 
 	return (
@@ -354,7 +412,7 @@ function RosterEntryButton({
 			<div className="crew-entry-body">
 				<div className="crew-entry-role">{buildRoleLine(entry)}</div>
 				<div className="crew-entry-name">
-					{rank.abbreviation} {formatPersonnelDisplayName(entry.person.identity)}
+					{rank ? `${rank.abbreviation} ` : ''}{formatPersonnelDisplayName(entry.person.identity)}
 				</div>
 				<div className="crew-entry-meta">
 					{species.name}
@@ -379,6 +437,14 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 
 	const roster = profile.future.crew;
 	const entries = useMemo(() => (roster ? listRosterForDisplay(roster) : []), [roster]);
+	const personnelById = useMemo(() => {
+		const map = new Map<string, PersonnelRecord>();
+		for (const entry of entries) {
+			map.set(entry.person.id, entry.person);
+		}
+		return map;
+	}, [entries]);
+
 	const selectedEntry = entries.find((entry) => entry.person.id === selectedId) ?? null;
 
 	const genderOptions = useMemo(() => {
@@ -444,6 +510,8 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 						roleLabel={selectedEntry.roleLabel}
 						isCaptain={selectedEntry.isCaptain}
 						isSecondOfficer={selectedEntry.isSecondOfficer}
+						relationships={roster.relationships}
+						personnelById={personnelById}
 						onBack={() => setSelectedId(null)}
 					/>
 				) : (

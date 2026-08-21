@@ -28,15 +28,18 @@ export function formatStatLine(
 }
 
 export function formatPersonnelTitleLine(person: PersonnelRecord): string {
-	const rank = getRank(person.rankId);
 	const name = formatPersonnelDisplayName(person.identity);
+	if (!person.rankId) {
+		return name;
+	}
+	const rank = getRank(person.rankId);
 	return `${rank.abbreviation} ${name}`.trim();
 }
 
 export function formatPersonnelSummary(person: PersonnelRecord): string {
 	const species = getSpecies(person.speciesId);
-	const division = getDivision(person.divisionId);
-	const position = getPosition(person.positionId);
+	const division = person.divisionId ? getDivision(person.divisionId) : null;
+	const position = person.positionId ? getPosition(person.positionId) : null;
 	const appointment = person.commandAppointmentId
 		? getCommandAppointment(person.commandAppointmentId)
 		: null;
@@ -44,8 +47,8 @@ export function formatPersonnelSummary(person: PersonnelRecord): string {
 	const lines = [
 		formatPersonnelTitleLine(person),
 		species.name,
-		`${division.name} Division`,
-		position.name,
+		division ? `${division.name} Division` : 'Civilian',
+		position?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : 'Crew'),
 	];
 
 	if (appointment) {

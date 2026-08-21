@@ -6,6 +6,7 @@ import type { StatModifier } from './modifiers';
 import type { PositionId } from './positions';
 import type { RankId } from './ranks';
 import type { ProfessionalSkillScores } from './skills';
+import type { CivilianRoleId } from './civilianRoles';
 import type { SpeciesId } from './species';
 
 export type PersonnelOrigin = 'generated' | 'player_captain' | 'canon';
@@ -20,6 +21,9 @@ export type PersonnelStatus =
 	| 'missing';
 
 export type PersonnelGender = 'female' | 'male' | 'nonbinary' | 'unspecified' | 'other';
+
+/** Union service member vs civilian inhabitant. */
+export type PersonnelKind = 'union' | 'civilian';
 
 export interface PersonnelIdentity {
 	firstName: string;
@@ -57,10 +61,16 @@ export interface PersonnelRecord {
 	dateOfBirth?: string;
 	/** Derived or stored age in years; optional while DOB unresolved. */
 	ageYears?: number;
-	rankId: RankId;
-	divisionId: DivisionId;
-	/** Primary departmental position. */
-	positionId: PositionId;
+	/** Union officer vs civilian inhabitant. */
+	personnelKind: PersonnelKind;
+	/** Civilian occupation when personnelKind is civilian. */
+	civilianRoleId: CivilianRoleId | null;
+	/** Null for civilians (not Planetary Union ranked personnel). */
+	rankId: RankId | null;
+	/** Null for civilians. */
+	divisionId: DivisionId | null;
+	/** Primary departmental position; null for civilians. */
+	positionId: PositionId | null;
 	/** Optional command appointment (e.g. Second Officer) held in addition to position. */
 	commandAppointmentId: CommandAppointmentId | null;
 	/** Base 0–10 attribute scores (modifiers tracked separately). */
@@ -91,9 +101,11 @@ export interface CreatePersonnelInput {
 	gender?: PersonnelGender;
 	dateOfBirth?: string;
 	ageYears?: number;
-	rankId: RankId;
-	divisionId: DivisionId;
-	positionId: PositionId;
+	personnelKind?: PersonnelKind;
+	civilianRoleId?: CivilianRoleId | null;
+	rankId?: RankId | null;
+	divisionId?: DivisionId | null;
+	positionId?: PositionId | null;
 	commandAppointmentId?: CommandAppointmentId | null;
 	baseAttributes: CoreAttributeScores;
 	baseSkills: ProfessionalSkillScores;
@@ -128,9 +140,11 @@ export function createPersonnelRecord(input: CreatePersonnelInput): PersonnelRec
 		gender: input.gender ?? 'unspecified',
 		dateOfBirth: input.dateOfBirth,
 		ageYears: input.ageYears,
-		rankId: input.rankId,
-		divisionId: input.divisionId,
-		positionId: input.positionId,
+		personnelKind: input.personnelKind ?? 'union',
+		civilianRoleId: input.civilianRoleId ?? null,
+		rankId: input.rankId ?? null,
+		divisionId: input.divisionId ?? null,
+		positionId: input.positionId ?? null,
 		commandAppointmentId: input.commandAppointmentId ?? null,
 		baseAttributes: { ...input.baseAttributes },
 		baseSkills: { ...input.baseSkills },
@@ -150,4 +164,12 @@ export function createPersonnelRecord(input: CreatePersonnelInput): PersonnelRec
 		createdAt: now,
 		updatedAt: now,
 	};
+}
+
+export function isUnionPersonnel(person: PersonnelRecord): boolean {
+	return person.personnelKind === 'union';
+}
+
+export function isCivilianPersonnel(person: PersonnelRecord): boolean {
+	return person.personnelKind === 'civilian';
 }
