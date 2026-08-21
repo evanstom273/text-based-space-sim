@@ -18,11 +18,12 @@ import {
 } from '../domain/personnel/roster';
 import type { PersonnelRecord } from '../domain/personnel/personnel';
 import type { PersonnelRelationship } from '../domain/personnel/relationships';
-import { randomAssignmentLocation } from './profileRandomizer';
+import { sanitizeCommunicationsState } from '../domain/ai/conversations';
 import {
 	formatDisplayCaptain,
 	formatDisplayRegistry,
 	normalizeShipNameInput,
+	randomAssignmentLocation,
 } from './profileRandomizer';
 
 const STORAGE_KEY = 'union-terminal-command-profiles';
@@ -131,6 +132,7 @@ function sanitizeProfile(raw: Partial<CommandProfile>): CommandProfile | null {
 		future: {
 			...raw.future,
 			crew,
+			communications: sanitizeCommunicationsState(raw.future?.communications),
 		},
 	};
 }

@@ -2,6 +2,8 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Briefcase, Dna, Heart, Network, UserRound } from 'lucide-react';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 import { useActiveCommandProfile } from '../../context/GameSessionContext';
+import { CrewConversationView } from './crew/CrewConversationView';
+import { isGeminiConfigured } from '../../utils/geminiSettings';
 import {
 	CORE_ATTRIBUTE_IDS,
 	CORE_ATTRIBUTES,
@@ -328,6 +330,8 @@ function PersonnelProfileView({
 	relationships,
 	personnelById,
 	onBack,
+	onCommunicate,
+	geminiReady,
 }: {
 	person: PersonnelRecord;
 	roleLabel: string;
@@ -336,6 +340,8 @@ function PersonnelProfileView({
 	relationships: readonly PersonnelRelationship[];
 	personnelById: ReadonlyMap<string, PersonnelRecord>;
 	onBack: () => void;
+	onCommunicate: () => void;
+	geminiReady: boolean;
 }) {
 	const species = getSpecies(person.speciesId);
 	const rank = person.rankId ? getRank(person.rankId) : null;
@@ -517,8 +523,18 @@ function PersonnelProfileView({
 						</h4>
 					</div>
 					<p className="crew-section-copy crew-section-copy--dim">
-						Command interaction protocols reserved for future systems.
+						{geminiReady
+							? 'Open a direct subspace channel for free-form dialogue with this crew member.'
+							: 'Configure Gemini in Settings to enable live crew communication.'}
 					</p>
+					<button
+						type="button"
+						className="game-btn game-btn--primary mt-3"
+						onClick={onCommunicate}
+						disabled={!geminiReady}
+					>
+						COMMUNICATE
+					</button>
 				</section>
 			) : null}
 		</div>
@@ -564,6 +580,8 @@ function RosterEntryButton({
 export function CrewRosterApp(_props: CrewRosterAppProps) {
 	const profile = useActiveCommandProfile();
 	const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [communicatingId, setCommunicatingId] = useState<string | null>(null);
+	const geminiReady = isGeminiConfigured();
 	const [category, setCategory] = useState<RosterCategory>('all');
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filters, setFilters] = useState<RosterFilters>(EMPTY_FILTERS);
@@ -580,6 +598,8 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 	}, [entries]);
 
 	const selectedEntry = entries.find((entry) => entry.person.id === selectedId) ?? null;
+	const communicatingEntry =
+		entries.find((entry) => entry.person.id === communicatingId) ?? null;
 
 	const genderOptions = useMemo(() => {
 		const seen = new Set<PersonnelGender>();
@@ -643,6 +663,12 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 							Senior staff assigned during New Command Assignment will appear here.
 						</p>
 					</section>
+				) : communicatingEntry ? (
+					<CrewConversationView
+						person={communicatingEntry.person}
+						roleLabel={communicatingEntry.roleLabel}
+						onBack={() => setCommunicatingId(null)}
+					/>
 				) : selectedEntry ? (
 					<PersonnelProfileView
 						person={selectedEntry.person}
@@ -652,6 +678,8 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 						relationships={roster.relationships}
 						personnelById={personnelById}
 						onBack={() => setSelectedId(null)}
+						onCommunicate={() => setCommunicatingId(selectedEntry.person.id)}
+						geminiReady={geminiReady}
 					/>
 				) : (
 					<>

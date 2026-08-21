@@ -43,6 +43,7 @@ interface GameSessionContextValue {
 	completeAuth: () => void;
 	relinquishCommand: () => void;
 	persistActiveSimulation: (snapshot: ShipStateSnapshot) => void;
+	patchActiveProfile: (recipe: (profile: CommandProfile) => CommandProfile) => void;
 }
 
 const GameSessionContext = createContext<GameSessionContextValue | undefined>(undefined);
@@ -159,6 +160,21 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 		[activeProfile, persistStore],
 	);
 
+	const patchActiveProfile = useCallback(
+		(recipe: (profile: CommandProfile) => CommandProfile) => {
+			if (!activeProfile) return;
+
+			const updated = recipe({
+				...activeProfile,
+				updatedAt: Date.now(),
+			});
+			const store = upsertProfile(loadProfileStore(), updated);
+			persistStore(store.profiles);
+			setActiveProfile(updated);
+		},
+		[activeProfile, persistStore],
+	);
+
 	const relinquishCommand = useCallback(() => {
 		setAuthMode('exit');
 		setPhase('auth');
@@ -181,6 +197,7 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 			completeAuth,
 			relinquishCommand,
 			persistActiveSimulation,
+			patchActiveProfile,
 		}),
 		[
 			phase,
@@ -198,6 +215,7 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 			completeAuth,
 			relinquishCommand,
 			persistActiveSimulation,
+			patchActiveProfile,
 		],
 	);
 

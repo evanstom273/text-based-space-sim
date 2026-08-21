@@ -14,8 +14,10 @@ import { useRelinquishCommand } from '../../hooks/useRelinquishCommand';
 import { formatDisplayShipName } from '../../utils/profileRandomizer';
 import {
 	GEMINI_MODELS,
+	clearGeminiSettings,
 	type GeminiModelId,
 	type GeminiSettings,
+	isGeminiConfigured,
 	loadGeminiSettings,
 	saveGeminiSettings,
 	validateGeminiConnection,
@@ -108,6 +110,20 @@ export function SettingsApp(_props: SettingsAppProps) {
 		setGeminiFeedbackMessage('Gemini settings saved for this terminal.');
 	};
 
+	const handleRemoveGemini = () => {
+		clearGeminiSettings();
+		setSavedGeminiSettings(null);
+		setDraftApiKey('');
+		setDraftModelId(GEMINI_MODELS[0].id);
+		resetGeminiFeedback();
+		setGeminiFeedbackTone('saved');
+		setGeminiFeedbackMessage('Gemini API key removed from this terminal.');
+	};
+
+	const geminiAvailability = isGeminiConfigured()
+		? 'Available for crew communication'
+		: 'Not configured — crew communication disabled';
+
 	const geminiFeedbackClassName =
 		geminiFeedbackTone === 'success' || geminiFeedbackTone === 'saved'
 			? 'text-[var(--accent-gold)]'
@@ -176,13 +192,27 @@ export function SettingsApp(_props: SettingsAppProps) {
 				<section className="module-panel rounded-sm p-4 terminal-bevel-sm">
 					<h3 className="module-heading">Gemini integration</h3>
 					<p className="module-copy-muted mt-1">
-						Store a Google Gemini API key on this terminal for future AI-assisted ship systems.
-						Validate the key against the selected model, then save it locally.
+						Store a Google Gemini API key on this terminal for optional AI-assisted crew
+						communication. Validate the key against the selected model, then save it locally.
 					</p>
+
+					<div className="module-inset mt-3 rounded-sm px-3 py-2 terminal-bevel-sm">
+						<p className="module-label">Availability</p>
+						<p
+							className={`mt-1 font-mono text-[11px] ${
+								isGeminiConfigured()
+									? 'text-[var(--accent-gold)]'
+									: 'text-[var(--module-text-dim)]'
+							}`}
+						>
+							{geminiAvailability}
+						</p>
+					</div>
 
 					{savedGeminiSettings ? (
 						<p className="module-copy mt-3">
-							Saved key on file · {GEMINI_MODELS.find((model) => model.id === savedGeminiSettings.modelId)?.label}
+							Saved key on file ·{' '}
+							{GEMINI_MODELS.find((model) => model.id === savedGeminiSettings.modelId)?.label}
 						</p>
 					) : (
 						<p className="module-copy mt-3">No Gemini key saved on this terminal.</p>
@@ -235,6 +265,16 @@ export function SettingsApp(_props: SettingsAppProps) {
 						>
 							{isSavingGemini ? 'SAVING…' : 'SAVE GEMINI SETTINGS'}
 						</button>
+						{savedGeminiSettings ? (
+							<button
+								type="button"
+								className="game-btn game-btn--ghost"
+								onClick={handleRemoveGemini}
+								disabled={isValidatingGemini || isSavingGemini}
+							>
+								REMOVE API KEY
+							</button>
+						) : null}
 					</div>
 
 					{geminiFeedbackMessage ? (
