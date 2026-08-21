@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Briefcase, Dna, Heart, Network, UserRound } from 'lucide-react';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 import { useActiveCommandProfile } from '../../context/GameSessionContext';
 import {
@@ -24,6 +25,7 @@ import {
 	PROFESSIONAL_SKILL_IDS,
 	PROFESSIONAL_SKILLS,
 	RANK_LIST,
+	SENIOR_STAFF_POSITION_IDS,
 	SPECIES_LIST,
 	STAT_BASE_MAX,
 	type DivisionId,
@@ -185,6 +187,95 @@ function countActiveFilters(filters: RosterFilters): number {
 	return Object.values(filters).filter((value) => value !== '').length;
 }
 
+function getPersonnelInitials(person: PersonnelRecord): string {
+	const first = person.identity.firstName.trim()[0] ?? '?';
+	const last = person.identity.lastName.trim()[0] ?? '';
+	return `${first}${last}`.toUpperCase();
+}
+
+function getProfileAccent(
+	person: PersonnelRecord,
+	isCaptain: boolean,
+): HierarchyAccent {
+	if (isCaptain) return 'captain';
+	if (person.positionId === 'first_officer') return 'xo';
+	if (person.positionId && SENIOR_STAFF_POSITION_IDS.includes(person.positionId)) {
+		return 'senior';
+	}
+	return 'standard';
+}
+
+function relationshipCardModifier(label: string): string {
+	const normalized = label.toLowerCase();
+	if (
+		normalized.includes('parent') ||
+		normalized.includes('child') ||
+		normalized.includes('spouse') ||
+		normalized.includes('partner') ||
+		normalized.includes('sibling')
+	) {
+		return 'crew-relationship-card--family';
+	}
+	if (
+		normalized.includes('friend') ||
+		normalized.includes('rival') ||
+		normalized.includes('enemy') ||
+		normalized.includes('dating')
+	) {
+		return 'crew-relationship-card--social';
+	}
+	return '';
+}
+
+interface MappedRelationship {
+	id: string;
+	label: string;
+	category: 'professional' | 'personal';
+	otherName: string;
+}
+
+function RelationshipColumn({
+	title,
+	icon,
+	links,
+	tone,
+}: {
+	title: string;
+	icon: ReactNode;
+	links: readonly MappedRelationship[];
+	tone: 'professional' | 'personal';
+}) {
+	return (
+		<div className={`crew-relationship-column crew-relationship-column--${tone}`}>
+			<div className="crew-relationship-column-head">
+				<span className="crew-relationship-column-icon" aria-hidden="true">
+					{icon}
+				</span>
+				<h5 className="crew-relationship-column-title">{title}</h5>
+				<span className="crew-relationship-column-count">{links.length}</span>
+			</div>
+			{links.length > 0 ? (
+				<ul className="crew-relationship-list">
+					{links.map((link) => (
+						<li key={link.id}>
+							<div
+								className={`crew-relationship-card crew-relationship-card--${tone} ${relationshipCardModifier(link.label)}`.trim()}
+							>
+								<span className="crew-relationship-type">{link.label}</span>
+								<span className="crew-relationship-name">{link.otherName}</span>
+							</div>
+						</li>
+					))}
+				</ul>
+			) : (
+				<div className="crew-relationship-empty">
+					<p>No {tone} links recorded.</p>
+				</div>
+			)}
+		</div>
+	);
+}
+
 function StatMeter({
 	label,
 	breakdown,
@@ -257,11 +348,7 @@ function PersonnelProfileView({
 				? getCommandAppointment('second_officer')
 				: null;
 
-	const accent: HierarchyAccent = isCaptain
-		? 'captain'
-		: person.positionId === 'first_officer'
-			? 'xo'
-			: 'senior';
+	const accent: HierarchyAccent = getProfileAccent(person, isCaptain);
 
 	const personRelationships = listRelationshipsFrom(relationships, person.id)
 		.map((relationship) => {
@@ -275,10 +362,10 @@ function PersonnelProfileView({
 				otherName: formatPersonnelDisplayName(other.identity),
 			};
 		})
-		.filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+		.filter((entry): entry is MappedRelationship => entry !== null);
 	const professionalLinks = personRelationships.filter((entry) => entry.category === 'professional');
 	const personalLinks = personRelationships.filter((entry) => entry.category === 'personal');
-
+	const networkCount = personRelationships.length;
 
 	return (
 		<div className="crew-profile">
@@ -289,52 +376,75 @@ function PersonnelProfileView({
 			</div>
 
 			<header className={`crew-dossier crew-dossier--${accent} terminal-bevel-sm`}>
-				<div className="crew-dossier-topline">
-					<span className="crew-dossier-role">
-						{roleLabel.toUpperCase()}
-						{isSecondOfficer ? ' · SECOND OFFICER' : ''}
-					</span>
-					{person.service.serviceNumber ? (
-						<span className="crew-dossier-id">ID {person.service.serviceNumber}</span>
-					) : null}
-				</div>
-				<h3 className="crew-dossier-name">{formatPersonnelTitleLine(person)}</h3>
-				<p className="crew-dossier-identity">
-					{species.name}
-					{person.dateOfBirth ? ` · DOB ${person.dateOfBirth}` : ''}
-					{person.ageYears != null ? ` · Age ${person.ageYears}` : ''}
-					{` · ${formatGenderLabel(person.gender)}`}
-				</p>
-				<div className="crew-dossier-grid">
-					<div>
-						<span className="crew-meta-label">Rank</span>
-						<span className="crew-meta-value">{rank?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}</span>
+				<div className="crew-dossier-hero">
+					<div className="crew-dossier-avatar" aria-hidden="true">
+						<span>{getPersonnelInitials(person)}</span>
 					</div>
-					<div>
-						<span className="crew-meta-label">Division</span>
-						<span className="crew-meta-value">{division?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}</span>
-					</div>
-					<div>
-						<span className="crew-meta-label">Position</span>
-						<span className="crew-meta-value">{position?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}</span>
-					</div>
-					{appointment ? (
-						<div>
-							<span className="crew-meta-label">Appointment</span>
-							<span className="crew-meta-value crew-meta-value--gold">
-								{appointment.name}
+					<div className="crew-dossier-summary">
+						<div className="crew-dossier-topline">
+							<span className="crew-dossier-role">
+								{roleLabel.toUpperCase()}
+								{isSecondOfficer ? ' · SECOND OFFICER' : ''}
+							</span>
+							<span className={`crew-status-badge crew-status-badge--${person.status}`}>
+								{formatStatusLabel(person.status)}
 							</span>
 						</div>
-					) : null}
-					<div>
-						<span className="crew-meta-label">Status</span>
-						<span className="crew-meta-value">{formatStatusLabel(person.status)}</span>
+						<h3 className="crew-dossier-name">{formatPersonnelTitleLine(person)}</h3>
+						{rank ? (
+							<span className="crew-rank-badge">{rank.abbreviation}</span>
+						) : person.personnelKind === 'civilian' ? (
+							<span className="crew-rank-badge crew-rank-badge--civilian">CIV</span>
+						) : null}
+						{person.service.serviceNumber ? (
+							<span className="crew-dossier-id">SERVICE ID {person.service.serviceNumber}</span>
+						) : null}
 					</div>
+				</div>
+
+				<div className="crew-identity-tags">
+					<span className="crew-identity-tag">{species.name}</span>
+					{person.ageYears != null ? (
+						<span className="crew-identity-tag">Age {person.ageYears}</span>
+					) : null}
+					{person.dateOfBirth ? (
+						<span className="crew-identity-tag">DOB {person.dateOfBirth}</span>
+					) : null}
+					<span className="crew-identity-tag">{formatGenderLabel(person.gender)}</span>
+				</div>
+
+				<div className="crew-dossier-grid">
+					<div className="crew-meta-card">
+						<span className="crew-meta-label">Rank</span>
+						<span className="crew-meta-value">
+							{rank?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}
+						</span>
+					</div>
+					<div className="crew-meta-card">
+						<span className="crew-meta-label">Division</span>
+						<span className="crew-meta-value">
+							{division?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}
+						</span>
+					</div>
+					<div className="crew-meta-card">
+						<span className="crew-meta-label">Position</span>
+						<span className="crew-meta-value">
+							{position?.name ?? (person.personnelKind === 'civilian' ? 'Civilian' : '—')}
+						</span>
+					</div>
+					{appointment ? (
+						<div className="crew-meta-card crew-meta-card--gold">
+							<span className="crew-meta-label">Appointment</span>
+							<span className="crew-meta-value crew-meta-value--gold">{appointment.name}</span>
+						</div>
+					) : null}
 				</div>
 			</header>
 
-			<section className="crew-section terminal-bevel-sm">
-				<h4 className="crew-section-title">Core Attributes</h4>
+			<section className="crew-section crew-section--stats terminal-bevel-sm">
+				<div className="crew-section-head">
+					<h4 className="crew-section-title">Core Attributes</h4>
+				</div>
 				<div className="crew-meter-list">
 					{CORE_ATTRIBUTE_IDS.map((id) => (
 						<StatMeter
@@ -346,8 +456,10 @@ function PersonnelProfileView({
 				</div>
 			</section>
 
-			<section className="crew-section terminal-bevel-sm">
-				<h4 className="crew-section-title">Professional Skills</h4>
+			<section className="crew-section crew-section--stats terminal-bevel-sm">
+				<div className="crew-section-head">
+					<h4 className="crew-section-title">Professional Skills</h4>
+				</div>
 				<div className="crew-meter-list">
 					{PROFESSIONAL_SKILL_IDS.map((id) => (
 						<StatMeter
@@ -359,52 +471,51 @@ function PersonnelProfileView({
 				</div>
 			</section>
 
-			<section className="crew-section terminal-bevel-sm">
-				<h4 className="crew-section-title">Species Profile</h4>
+			<section className="crew-section crew-section--species terminal-bevel-sm">
+				<div className="crew-section-head">
+					<h4 className="crew-section-title">
+						<Dna size={14} aria-hidden="true" />
+						Species Profile
+					</h4>
+				</div>
 				<p className="crew-section-copy">{species.description}</p>
 				{species.biologyNotes ? (
 					<p className="crew-section-copy crew-section-copy--dim">{species.biologyNotes}</p>
 				) : null}
 			</section>
 
-			
-			<section className="crew-section terminal-bevel-sm">
-				<h4 className="crew-section-title">Professional Relationships</h4>
-				{professionalLinks.length > 0 ? (
-					<ul className="crew-relationship-list">
-						{professionalLinks.map((link) => (
-							<li key={link.id}>
-								{link.label}: {link.otherName}
-							</li>
-						))}
-					</ul>
-				) : (
-					<p className="crew-section-copy crew-section-copy--dim">
-						No professional relationships on file.
-					</p>
-				)}
-			</section>
-
-			<section className="crew-section terminal-bevel-sm">
-				<h4 className="crew-section-title">Personal Relationships</h4>
-				{personalLinks.length > 0 ? (
-					<ul className="crew-relationship-list">
-						{personalLinks.map((link) => (
-							<li key={link.id}>
-								{link.label}: {link.otherName}
-							</li>
-						))}
-					</ul>
-				) : (
-					<p className="crew-section-copy crew-section-copy--dim">
-						No personal relationships on file.
-					</p>
-				)}
+			<section className="crew-section crew-section--relationships terminal-bevel-sm">
+				<div className="crew-section-head">
+					<h4 className="crew-section-title">
+						<Network size={14} aria-hidden="true" />
+						Personnel Network
+					</h4>
+					<span className="crew-section-count">{networkCount}</span>
+				</div>
+				<div className="crew-relationship-panel">
+					<RelationshipColumn
+						title="Professional"
+						icon={<Briefcase size={14} strokeWidth={2.25} />}
+						links={professionalLinks}
+						tone="professional"
+					/>
+					<RelationshipColumn
+						title="Personal"
+						icon={<Heart size={14} strokeWidth={2.25} />}
+						links={personalLinks}
+						tone="personal"
+					/>
+				</div>
 			</section>
 
 			{!isCaptain ? (
 				<section className="crew-section crew-section--actions terminal-bevel-sm">
-					<h4 className="crew-section-title">Command Actions</h4>
+					<div className="crew-section-head">
+						<h4 className="crew-section-title">
+							<UserRound size={14} aria-hidden="true" />
+							Command Actions
+						</h4>
+					</div>
 					<p className="crew-section-copy crew-section-copy--dim">
 						Command interaction protocols reserved for future systems.
 					</p>
