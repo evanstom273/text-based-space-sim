@@ -55,8 +55,8 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 	const [fastBoot, setFastBootState] = useState(() => loadFastBootPreference());
 
 	const persistStore = useCallback((nextProfiles: CommandProfile[]) => {
-		setProfiles(nextProfiles);
 		saveProfileStore({ version: 1, profiles: nextProfiles });
+		setProfiles(nextProfiles);
 	}, []);
 
 	const setFastBoot = useCallback((enabled: boolean) => {
@@ -79,6 +79,13 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 	const createAndAssumeCommand = useCallback(
 		(input: CreateProfileInput) => {
 			const profile = createCommandProfile(input);
+			const crew = profile.future.crew;
+			if (!crew || crew.personnel.length < 20) {
+				console.error('Ship population incomplete after profile creation', {
+					personnel: crew?.personnel.length ?? 0,
+					relationships: crew?.relationships.length ?? 0,
+				});
+			}
 			const store = upsertProfile(loadProfileStore(), profile);
 			persistStore(store.profiles);
 			setActiveProfile(profile);

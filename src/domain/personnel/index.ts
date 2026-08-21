@@ -240,8 +240,11 @@ export {
 export {
 	populateShipRoster,
 	createPopulatedCrewRoster,
+	isUnpopulatedSeniorRoster,
+	ensureShipPopulation,
 	requirePersonnel,
 } from './populationGenerator';
+
 
 export {
 	validateShipPopulation,

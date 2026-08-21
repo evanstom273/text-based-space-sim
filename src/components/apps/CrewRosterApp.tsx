@@ -41,10 +41,20 @@ interface CrewRosterAppProps {
 	appId: string;
 }
 
-type RosterCategory = 'senior_staff' | 'engineering' | 'security' | 'medical' | 'science' | 'civilian';
+type RosterCategory =
+	| 'all'
+	| 'senior_staff'
+	| 'command'
+	| 'engineering'
+	| 'security'
+	| 'medical'
+	| 'science'
+	| 'civilian';
 
 const ROSTER_CATEGORIES: ReadonlyArray<{ id: RosterCategory; label: string }> = [
+	{ id: 'all', label: 'All Personnel' },
 	{ id: 'senior_staff', label: 'Senior Staff' },
+	{ id: 'command', label: 'Command' },
 	{ id: 'engineering', label: 'Engineering' },
 	{ id: 'security', label: 'Security' },
 	{ id: 'medical', label: 'Medical' },
@@ -53,6 +63,7 @@ const ROSTER_CATEGORIES: ReadonlyArray<{ id: RosterCategory; label: string }> = 
 ];
 
 const CATEGORY_DIVISION: Partial<Record<RosterCategory, DivisionId>> = {
+	command: 'command',
 	engineering: 'engineering',
 	security: 'security',
 	medical: 'medical',
@@ -157,6 +168,9 @@ function matchesFilters(entry: RosterListEntry, filters: RosterFilters): boolean
 }
 
 function matchesCategory(entry: RosterListEntry, category: RosterCategory): boolean {
+	if (category === 'all') {
+		return true;
+	}
 	if (category === 'senior_staff') {
 		return entry.isCaptain || entry.isSeniorStaff;
 	}
@@ -353,9 +367,9 @@ function PersonnelProfileView({
 			</section>
 
 			
-			{professionalLinks.length > 0 ? (
-				<section className="crew-section terminal-bevel-sm">
-					<h4 className="crew-section-title">Professional Relationships</h4>
+			<section className="crew-section terminal-bevel-sm">
+				<h4 className="crew-section-title">Professional Relationships</h4>
+				{professionalLinks.length > 0 ? (
 					<ul className="crew-relationship-list">
 						{professionalLinks.map((link) => (
 							<li key={link.id}>
@@ -363,12 +377,16 @@ function PersonnelProfileView({
 							</li>
 						))}
 					</ul>
-				</section>
-			) : null}
+				) : (
+					<p className="crew-section-copy crew-section-copy--dim">
+						No professional relationships on file.
+					</p>
+				)}
+			</section>
 
-			{personalLinks.length > 0 ? (
-				<section className="crew-section terminal-bevel-sm">
-					<h4 className="crew-section-title">Personal Relationships</h4>
+			<section className="crew-section terminal-bevel-sm">
+				<h4 className="crew-section-title">Personal Relationships</h4>
+				{personalLinks.length > 0 ? (
 					<ul className="crew-relationship-list">
 						{personalLinks.map((link) => (
 							<li key={link.id}>
@@ -376,8 +394,12 @@ function PersonnelProfileView({
 							</li>
 						))}
 					</ul>
-				</section>
-			) : null}
+				) : (
+					<p className="crew-section-copy crew-section-copy--dim">
+						No personal relationships on file.
+					</p>
+				)}
+			</section>
 
 			{!isCaptain ? (
 				<section className="crew-section crew-section--actions terminal-bevel-sm">
@@ -430,7 +452,7 @@ function RosterEntryButton({
 export function CrewRosterApp(_props: CrewRosterAppProps) {
 	const profile = useActiveCommandProfile();
 	const [selectedId, setSelectedId] = useState<string | null>(null);
-	const [category, setCategory] = useState<RosterCategory>('senior_staff');
+	const [category, setCategory] = useState<RosterCategory>('all');
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filters, setFilters] = useState<RosterFilters>(EMPTY_FILTERS);
 	const [filtersOpen, setFiltersOpen] = useState(false);
@@ -491,7 +513,12 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 					</div>
 					<div>
 						<h2 className="module-title">Crew Roster</h2>
-						<p className="module-subtitle">REC-01 · Personnel records</p>
+						<p className="module-subtitle">
+							REC-01 ·{' '}
+							{roster
+								? `${entries.length} personnel aboard · ${roster.relationships.length} relationships`
+								: 'Personnel records'}
+						</p>
 					</div>
 				</div>
 			</div>
@@ -712,7 +739,8 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 										'Senior Staff'}
 								</h3>
 								<span className="crew-roster-count">
-									{filteredEntries.length} personnel
+									{filteredEntries.length}
+									{category === 'all' ? '' : ` of ${entries.length}`} personnel
 								</span>
 							</div>
 
@@ -720,7 +748,7 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 								<div className="crew-empty terminal-bevel-sm">
 									<p className="module-copy">No personnel match current criteria.</p>
 									<p className="module-copy-muted mt-1">
-										Adjust category, search, or filters to widen results.
+										Try All Personnel, another division, or clear search/filters.
 									</p>
 								</div>
 							) : (
