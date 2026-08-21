@@ -1,6 +1,5 @@
 export const CREW_CONVERSATION_SCHEMA_VERSION = 1 as const;
 export const MAX_STORED_MESSAGES_PER_THREAD = 100;
-export const MAX_CONTEXT_MESSAGES = 24;
 
 export type CrewConversationRole = 'captain' | 'character';
 
@@ -21,7 +20,6 @@ export interface CrewConversationThread {
 
 export interface CommandProfileCommunicationsState {
 	schemaVersion: typeof CREW_CONVERSATION_SCHEMA_VERSION;
-	/** Per-personnel dialogue threads only. Never store API keys or Gemini credentials here. */
 	threads: Record<string, CrewConversationThread>;
 }
 
@@ -152,8 +150,16 @@ export function appendConversationMessages(
 	};
 }
 
-export function getRecentContextMessages(
-	thread: CrewConversationThread,
-): CrewConversationMessage[] {
-	return thread.messages.slice(-MAX_CONTEXT_MESSAGES);
+export function clearConversationThread(
+	communications: CommandProfileCommunicationsState | undefined,
+	personnelId: string,
+): CommandProfileCommunicationsState {
+	const base = communications ?? createEmptyCommunicationsState();
+	if (!base.threads[personnelId]) return base;
+
+	const { [personnelId]: _removed, ...remainingThreads } = base.threads;
+	return {
+		schemaVersion: CREW_CONVERSATION_SCHEMA_VERSION,
+		threads: remainingThreads,
+	};
 }

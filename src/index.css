@@ -3339,28 +3339,65 @@ body {
 	color: var(--module-text-dim);
 }
 
-.crew-conv-input {
-	width: 100%;
-	min-height: 4.5rem;
-	padding: 0.65rem 0.75rem;
-	border: 1px solid rgba(240, 240, 244, 0.16);
-	background: var(--surface-inset);
-	color: var(--module-text);
+.crew-conv-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.crew-conv-compose-copy {
+	margin: 0 0 0.35rem;
 	font-family: var(--font-mono);
-	font-size: 0.75rem;
-	line-height: 1.5;
-	resize: vertical;
-	outline: none;
+	font-size: 0.625rem;
+	line-height: 1.45;
+	color: var(--module-text-dim);
 }
 
-.crew-conv-input:focus {
-	border-color: rgba(131, 68, 201, 0.65);
-	box-shadow: 0 0 0 1px rgba(131, 68, 201, 0.25);
+.crew-conv-preset-group {
+	margin-top: 0.75rem;
 }
 
-.crew-conv-input:disabled {
-	opacity: 0.55;
-	cursor: not-allowed;
+.crew-conv-preset-group-label {
+	margin: 0 0 0.4rem;
+	font-family: var(--font-mono);
+	font-size: 0.5625rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--accent-purple-dim);
+}
+
+.crew-conv-presets {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+}
+
+.crew-conv-preset-btn {
+	flex: 1 1 calc(50% - 0.45rem);
+	min-width: 8.5rem;
+	padding: 0.55rem 0.65rem;
+	border: 1px solid color-mix(in srgb, var(--module-border) 80%, transparent);
+	background: color-mix(in srgb, var(--module-surface-inset) 92%, white);
+	font-family: var(--font-mono);
+	font-size: 0.625rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--module-text);
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.crew-conv-preset-btn:hover {
+	border-color: color-mix(in srgb, var(--accent-purple) 45%, var(--module-border));
+	background: color-mix(in srgb, var(--accent-purple) 10%, var(--module-surface-inset));
+}
+
+.crew-conv-preset-btn:active {
+	border-color: color-mix(in srgb, var(--accent-gold) 55%, var(--module-border));
 }
 
 .crew-conv-compose-actions {
