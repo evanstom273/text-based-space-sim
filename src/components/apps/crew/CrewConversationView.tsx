@@ -1,7 +1,7 @@
 ﻿import { formatClock } from '../../../utils/terminalTime';
 import type { CommandProfile } from '../../../types/commandProfile';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, MessageSquare, Radio, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, MessageSquare, Radio, Send, Sparkles } from 'lucide-react';
 import { useShipClock } from '../../../context/ClockContext';
 import { useActiveCommandProfile, useGameSession } from '../../../context/GameSessionContext';
 import {
@@ -66,6 +66,14 @@ export function CrewConversationView({ person, roleLabel, onBack }: CrewConversa
 	const [activeCategory, setActiveCategory] = useState<DialogueCategory>('general');
 	const [lastResolution, setLastResolution] = useState<DialogueResolutionResult | null>(null);
 	const [showDiagnostics, setShowDiagnostics] = useState<boolean>(false);
+	const [transmittingIndex, setTransmittingIndex] = useState<number | null>(null);
+
+	// Reset session when target person changes
+	useEffect(() => {
+		setSessionTracker(createInitialSessionTracker(person.id));
+		setLastResolution(null);
+		setActiveCategory('general');
+	}, [person.id]);
 
 	const thread = useMemo(
 		() => getConversationThread(profile.future.communications, person.id),
@@ -101,27 +109,37 @@ export function CrewConversationView({ person, roleLabel, onBack }: CrewConversa
 		[dialogueContext, activeCategory],
 	);
 
+	const scrollToBottom = () => {
+		if (!transcriptRef.current) return;
+		transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
+	};
+
 	useEffect(() => {
-		const node = transcriptRef.current;
-		if (!node) return;
-		node.scrollTop = node.scrollHeight;
+		scrollToBottom();
 	}, [thread.messages.length]);
 
-	const handleOptionSelect = (option: AvailableDialogueOption) => {
-		const result = sendProceduralDialogue({
-			profile,
-			person,
-			intentId: option.intentId,
-			targetParty: option.targetParty,
-			absoluteDay,
-			minutesInDay,
-			sessionTracker,
+	const handleOptionSelect = (option: AvailableDialogueOption, index: number) => {
+		setTransmittingIndex(index);
+		setTimeout(() => setTransmittingIndex(null), 300);
+
+		patchActiveProfile((currentProfile) => {
+			const result = sendProceduralDialogue({
+				profile: currentProfile,
+				person,
+				intentId: option.intentId,
+				targetParty: option.targetParty,
+				absoluteDay,
+				minutesInDay,
+				sessionTracker,
+			});
+
+			setSessionTracker(result.updatedSessionTracker);
+			setLastResolution(result.resolution);
+
+			return result.updatedProfile;
 		});
 
-		setSessionTracker(result.updatedSessionTracker);
-		setLastResolution(result.resolution);
-
-		patchActiveProfile((_current: CommandProfile) => result.updatedProfile);
+		setTimeout(scrollToBottom, 50);
 	};
 
 	const handleClearChat = () => {
@@ -172,6 +190,7 @@ export function CrewConversationView({ person, roleLabel, onBack }: CrewConversa
 				</div>
 			</header>
 
+			{/* Diagnostics Drawer in DEV */}
 			{import.meta.env.DEV && lastResolution ? (
 				<div className="mx-4 mt-2 rounded border border-[var(--panel-border)] bg-black/40 p-2 text-[10px] font-mono">
 					<button
@@ -204,7 +223,7 @@ export function CrewConversationView({ person, roleLabel, onBack }: CrewConversa
 						<MessageSquare size={18} strokeWidth={2} aria-hidden="true" />
 						<p>No prior traffic on this channel.</p>
 						<p className="crew-conv-empty-copy">
-							Select a procedural dialogue intent below to communicate with{' '}
+							Select a transmission intent below to open communications with{' '}
 							{formatPersonnelDisplayName(person.identity)}.
 						</p>
 					</div>
@@ -233,6 +252,7 @@ export function CrewConversationView({ person, roleLabel, onBack }: CrewConversa
 			<div className="crew-conv-compose terminal-bevel-sm p-4">
 				<p className="crew-conv-compose-label">Captain Transmission</p>
 				
+				{/* Category Selector Tabs */}
 				<div className="mt-2 flex flex-wrap gap-1.5 border-b border-[var(--panel-border)] pb-2">
 					{availableCategories.map((cat) => (
 						<button
@@ -240,7 +260,7 @@ export function CrewConversationView({ person, roleLabel, onBack }: CrewConversa
 							type="button"
 							className={'rounded-xs px-2.5 py-1 font-mono text-[11px] transition-colors ' + (
 								activeCategory === cat
-									? 'bg-[var(--accent-gold)] text-black font-semibold'
+									? 'bg-[var(--accent-gold)] text-black font-semibold shadow-xs'
 									: 'bg-[var(--panel-bg-subtle)] text-[var(--module-text-dim)] hover:text-[var(--module-text)] hover:bg-[var(--panel-border)]'
 							)}
 							onClick={() => setActiveCategory(cat)}
@@ -250,34 +270,43 @@ export function CrewConversationView({ person, roleLabel, onBack }: CrewConversa
 					))}
 				</div>
 
+				{/* Available Dialogue Choices */}
 				<div className="mt-3 flex max-h-48 flex-col gap-2 overflow-y-auto pr-1">
 					{availableOptions.length === 0 ? (
-						<p className="font-mono text-[11px] text-[var(--module-text-dim)]">
+						<p className="py-2 font-mono text-[11px] text-[var(--module-text-dim)]">
 							No available topics in this category right now.
 						</p>
 					) : (
-						availableOptions.map((opt, idx) => (
-							<button
-								key={opt.intentId + '-' + idx + '-' + (opt.targetParty?.person.id ?? '')}
-								type="button"
-								className="group flex flex-col items-start rounded border border-[var(--panel-border)] bg-[var(--panel-bg)] p-2.5 text-left transition-colors hover:border-[var(--accent-gold)] hover:bg-[var(--panel-bg-subtle)]"
-								onClick={() => handleOptionSelect(opt)}
-							>
-								<div className="flex w-full items-center justify-between gap-2">
-									<span className="font-mono text-[11px] font-medium text-[var(--accent-gold)] group-hover:text-[var(--accent-gold-bright)]">
-										{opt.label}
-									</span>
-									{opt.targetParty ? (
-										<span className="rounded-xs bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-[var(--accent-cyan)]">
-											{opt.targetParty.primaryRelationshipLabel}
+						availableOptions.map((opt, idx) => {
+							const isTransmitting = transmittingIndex === idx;
+							return (
+								<button
+									key={opt.intentId + '-' + idx + '-' + (opt.targetParty?.person.id ?? '')}
+									type="button"
+									className={'group flex flex-col items-start rounded border p-2.5 text-left transition-all ' + (
+										isTransmitting
+											? 'border-[var(--accent-gold)] bg-[var(--accent-gold)]/15 ring-1 ring-[var(--accent-gold)]'
+											: 'border-[var(--panel-border)] bg-[var(--panel-bg)] hover:border-[var(--accent-gold)] hover:bg-[var(--panel-bg-subtle)] active:scale-[0.99]'
+									)}
+									onClick={() => handleOptionSelect(opt, idx)}
+								>
+									<div className="flex w-full items-center justify-between gap-2">
+										<span className="flex items-center gap-1.5 font-mono text-[11px] font-medium text-[var(--accent-gold)] group-hover:text-[var(--accent-gold-bright)]">
+											<Send size={11} className="opacity-60 group-hover:opacity-100" />
+											{opt.label}
 										</span>
-									) : null}
-								</div>
-								<p className="mt-1 text-[12px] text-[var(--module-text-dim)] group-hover:text-[var(--module-text)]">
-									&quot;{opt.playerText}&quot;
-								</p>
-							</button>
-						))
+										{opt.targetParty ? (
+											<span className="rounded-xs bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-[var(--accent-cyan)]">
+												{opt.targetParty.primaryRelationshipLabel}
+											</span>
+										) : null}
+									</div>
+									<p className="mt-1 text-[12px] text-[var(--module-text-dim)] group-hover:text-[var(--module-text)]">
+										&quot;{opt.playerText}&quot;
+									</p>
+								</button>
+							);
+						})
 					)}
 				</div>
 			</div>

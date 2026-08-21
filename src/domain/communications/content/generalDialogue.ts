@@ -1,4 +1,4 @@
-﻿import type { DialogueDefinition } from '../types';
+import type { DialogueDefinition } from '../types';
 import { isAdult, isYoungChild } from '../conditionEvaluator';
 
 export const GREET_DEFINITION: DialogueDefinition = {
@@ -8,10 +8,17 @@ export const GREET_DEFINITION: DialogueDefinition = {
 	isAvailable: () => true,
 	playerVariants: [
 		{
-			id: 'greet_formal',
+			id: 'greet_formal_1',
 			label: 'Formal greeting',
 			template: '{rankAbbr} {lastName}.',
 			tones: ['formal', 'professional'],
+			condition: (ctx) => ctx.target.isUnion && isAdult(ctx),
+		},
+		{
+			id: 'greet_formal_2',
+			label: 'Officer check-in',
+			template: 'Good to see you at your post, {rankAbbr} {lastName}.',
+			tones: ['formal'],
 			condition: (ctx) => ctx.target.isUnion && isAdult(ctx),
 		},
 		{
@@ -36,6 +43,13 @@ export const GREET_DEFINITION: DialogueDefinition = {
 			condition: (ctx) => ctx.target.timeOfDay === 'morning',
 		},
 		{
+			id: 'greet_afternoon',
+			label: 'Afternoon check-in',
+			template: 'Good afternoon, {firstName}.',
+			tones: ['friendly', 'professional'],
+			condition: (ctx) => ctx.target.timeOfDay === 'afternoon',
+		},
+		{
 			id: 'greet_evening',
 			label: 'Evening check-in',
 			template: 'Good evening, {firstName}.',
@@ -45,15 +59,33 @@ export const GREET_DEFINITION: DialogueDefinition = {
 	],
 	responseVariants: [
 		{
-			id: 'resp_greet_formal',
+			id: 'resp_greet_formal_1',
 			template: 'Captain. Standing by.',
 			tones: ['formal', 'professional'],
 			condition: (ctx) => ctx.target.isUnion && !ctx.target.isFriendOfCaptain && !ctx.target.hasConflictWithCaptain,
 		},
 		{
-			id: 'resp_greet_warm',
-			template: 'Good to hear from you, Captain. How can I help?',
+			id: 'resp_greet_formal_2',
+			template: 'Captain. Ready for your instructions.',
+			tones: ['formal', 'professional'],
+			condition: (ctx) => ctx.target.isUnion && !ctx.target.isFriendOfCaptain && !ctx.target.hasConflictWithCaptain,
+		},
+		{
+			id: 'resp_greet_formal_3',
+			template: 'Reporting as ordered, Captain. What can I do for you?',
+			tones: ['professional'],
+			condition: (ctx) => ctx.target.isUnion && !ctx.target.isFriendOfCaptain && !ctx.target.hasConflictWithCaptain,
+		},
+		{
+			id: 'resp_greet_warm_1',
+			template: 'Good to hear from you, Captain. How can I help today?',
 			tones: ['warm', 'friendly'],
+			condition: (ctx) => ctx.target.isFriendOfCaptain || ctx.target.isSpouseOfCaptain,
+		},
+		{
+			id: 'resp_greet_warm_2',
+			template: 'Hey, Captain. Always glad to catch you between rotations.',
+			tones: ['warm', 'casual'],
 			condition: (ctx) => ctx.target.isFriendOfCaptain || ctx.target.isSpouseOfCaptain,
 		},
 		{
@@ -63,15 +95,27 @@ export const GREET_DEFINITION: DialogueDefinition = {
 			condition: (ctx) => ctx.target.hasConflictWithCaptain,
 		},
 		{
-			id: 'resp_greet_child',
+			id: 'resp_greet_child_1',
 			template: 'Hi Captain! Are you driving the ship right now?',
 			tones: ['excited', 'casual'],
 			condition: (ctx) => isYoungChild(ctx),
 		},
 		{
-			id: 'resp_greet_civilian',
+			id: 'resp_greet_child_2',
+			template: 'Hello Captain! I was just watching the stars through the viewport.',
+			tones: ['friendly', 'casual'],
+			condition: (ctx) => isYoungChild(ctx) || ctx.target.lifeStage === 'older_child',
+		},
+		{
+			id: 'resp_greet_civilian_1',
 			template: 'Hello, Captain. Nice to hear from you.',
 			tones: ['casual', 'friendly'],
+			condition: (ctx) => ctx.target.isCivilian && isAdult(ctx),
+		},
+		{
+			id: 'resp_greet_civilian_2',
+			template: 'Good day, Captain. Hope everything is running smoothly on the command deck.',
+			tones: ['friendly'],
 			condition: (ctx) => ctx.target.isCivilian && isAdult(ctx),
 		},
 	],
@@ -84,10 +128,16 @@ export const ASK_WELLBEING_DEFINITION: DialogueDefinition = {
 	isAvailable: () => true,
 	playerVariants: [
 		{
-			id: 'wellbeing_standard',
+			id: 'wellbeing_standard_1',
 			label: 'How are you holding up?',
 			template: 'How are you holding up today?',
 			tones: ['professional', 'friendly'],
+		},
+		{
+			id: 'wellbeing_standard_2',
+			label: 'General check-in',
+			template: 'Just checking in on how you are settling in aboard {shipName}.',
+			tones: ['warm', 'professional'],
 		},
 		{
 			id: 'wellbeing_warm',
@@ -106,21 +156,45 @@ export const ASK_WELLBEING_DEFINITION: DialogueDefinition = {
 	],
 	responseVariants: [
 		{
-			id: 'resp_wellbeing_positive',
+			id: 'resp_wellbeing_positive_1',
 			template: "I'm doing well, Captain. Keeping steady with my routines aboard {shipName}.",
 			tones: ['warm', 'friendly', 'professional'],
 			condition: (ctx) => ctx.target.captainAffinity >= 0 && isAdult(ctx),
 		},
 		{
-			id: 'resp_wellbeing_strained',
+			id: 'resp_wellbeing_positive_2',
+			template: 'Feeling sharp and in good spirits, Captain. Morale in our section is solid.',
+			tones: ['confident', 'warm'],
+			condition: (ctx) => ctx.target.captainAffinity >= 0 && isAdult(ctx),
+		},
+		{
+			id: 'resp_wellbeing_positive_3',
+			template: "Can't complain, Captain. It's a busy cycle, but I enjoy the pace.",
+			tones: ['casual', 'friendly'],
+			condition: (ctx) => ctx.target.captainAffinity >= 0 && isAdult(ctx),
+		},
+		{
+			id: 'resp_wellbeing_strained_1',
 			template: "Managing, Captain. Long shifts lately, but nothing I can't handle.",
 			tones: ['tired', 'stressed', 'formal'],
 			condition: (ctx) => ctx.target.captainAffinity < 0 && isAdult(ctx),
 		},
 		{
-			id: 'resp_wellbeing_child',
-			template: "I'm doing good! I was looking out the viewport at the stars earlier.",
+			id: 'resp_wellbeing_strained_2',
+			template: 'A bit fatigued from the recent watch cycles, but I remain on duty and focused.',
+			tones: ['tired', 'formal'],
+			condition: (ctx) => ctx.target.captainAffinity < 0 && isAdult(ctx),
+		},
+		{
+			id: 'resp_wellbeing_child_1',
+			template: "I'm doing good! I was looking out the viewport at the star clusters earlier.",
 			tones: ['excited', 'casual'],
+			condition: (ctx) => ctx.target.lifeStage === 'young_child',
+		},
+		{
+			id: 'resp_wellbeing_child_2',
+			template: "I'm having fun! We had an environmental simulation project today.",
+			tones: ['excited'],
 			condition: (ctx) => ctx.target.lifeStage === 'young_child',
 		},
 		{
@@ -139,10 +213,17 @@ export const END_CONVERSATION_DEFINITION: DialogueDefinition = {
 	isAvailable: () => true,
 	playerVariants: [
 		{
-			id: 'end_formal',
+			id: 'end_formal_1',
 			label: 'That will be all',
 			template: 'That will be all for now. Dismissed.',
 			tones: ['formal'],
+			condition: (ctx) => ctx.target.isUnion && isAdult(ctx),
+		},
+		{
+			id: 'end_formal_2',
+			label: 'Carry on',
+			template: 'Keep up the good work. Carry on.',
+			tones: ['professional'],
 			condition: (ctx) => ctx.target.isUnion && isAdult(ctx),
 		},
 		{
@@ -154,9 +235,15 @@ export const END_CONVERSATION_DEFINITION: DialogueDefinition = {
 	],
 	responseVariants: [
 		{
-			id: 'resp_end_formal',
+			id: 'resp_end_formal_1',
 			template: 'Aye, Captain. Returning to post.',
 			tones: ['formal'],
+			condition: (ctx) => ctx.target.isUnion && isAdult(ctx),
+		},
+		{
+			id: 'resp_end_formal_2',
+			template: 'Copy that, Captain. Channel closed.',
+			tones: ['professional'],
 			condition: (ctx) => ctx.target.isUnion && isAdult(ctx),
 		},
 		{
