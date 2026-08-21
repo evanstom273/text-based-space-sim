@@ -23,6 +23,7 @@ import {
 	randomiseSkillAllocation,
 	SENIOR_STAFF_SELECTION_POSITIONS,
 	type CoreAttributeScores,
+	type PersonnelGender,
 	type PersonnelRecord,
 	type PositionId,
 	type ProfessionalSkillScores,
@@ -59,6 +60,14 @@ const STEP_LABELS: Record<CreateStep, string> = {
 	review: 'Final Review',
 };
 
+const CAPTAIN_GENDER_OPTIONS: readonly PersonnelGender[] = [
+	'female',
+	'male',
+	'nonbinary',
+	'unspecified',
+	'other',
+];
+
 function createInitialCandidates(): Record<PositionId, PersonnelRecord> {
 	const map = {} as Record<PositionId, PersonnelRecord>;
 	for (const positionId of SENIOR_STAFF_SELECTION_POSITIONS) {
@@ -73,6 +82,7 @@ export function CreateProfileScreen() {
 
 	const [step, setStep] = useState<CreateStep>('details');
 	const [captainName, setCaptainName] = useState('');
+	const [captainGender, setCaptainGender] = useState<PersonnelGender>('unspecified');
 	const [speciesId, setSpeciesId] = useState<SpeciesId>(eligibleSpecies[0]?.id ?? 'human');
 	const [shipName, setShipName] = useState('');
 	const [registry, setRegistry] = useState('');
@@ -166,6 +176,7 @@ export function CreateProfileScreen() {
 		const captainPersonnel = createCaptainPersonnel({
 			fullName: captainName.trim(),
 			speciesId,
+			gender: captainGender,
 			attributes,
 			skills,
 		});
@@ -240,6 +251,22 @@ export function CreateProfileScreen() {
 									autoComplete="off"
 									spellCheck={false}
 								/>
+							</label>
+							<label className="create-field">
+								<span className="create-label">Gender</span>
+								<select
+									className="create-input create-select"
+									value={captainGender}
+									onChange={(event) =>
+										setCaptainGender(event.target.value as PersonnelGender)
+									}
+								>
+									{CAPTAIN_GENDER_OPTIONS.map((gender) => (
+										<option key={gender} value={gender}>
+											{formatGenderLabel(gender)}
+										</option>
+									))}
+								</select>
 							</label>
 							<label className="create-field">
 								<span className="create-label">Species</span>
@@ -453,7 +480,9 @@ export function CreateProfileScreen() {
 							<div className="review-block">
 								<div className="review-label">Captain</div>
 								<div className="review-value">{captainName.trim().toUpperCase()}</div>
-								<div className="review-sub">{getSpecies(speciesId).name}</div>
+								<div className="review-sub">
+									{getSpecies(speciesId).name} · {formatGenderLabel(captainGender)}
+								</div>
 							</div>
 							<div className="review-block">
 								<div className="review-label">Vessel</div>
