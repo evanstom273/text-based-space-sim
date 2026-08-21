@@ -182,8 +182,41 @@ export interface PersonnelRelationship {
 	affinity: number;
 }
 
+/** Minimum age (years) for a parent in family relationships. */
+export const MIN_PARENT_AGE_YEARS = 18;
+
+/** Minimum age gap (years) between parent and child at generation time. */
+export const MIN_PARENT_CHILD_AGE_GAP_YEARS = 16;
+
+export function canBeBiologicalParentOf(
+	parentAgeYears: number | undefined,
+	childAgeYears: number | undefined,
+): boolean {
+	const parentAge = parentAgeYears ?? 0;
+	const childAge = childAgeYears ?? 0;
+	return (
+		parentAge >= MIN_PARENT_AGE_YEARS && parentAge >= childAge + MIN_PARENT_CHILD_AGE_GAP_YEARS
+	);
+}
+
 export function getRelationshipType(id: RelationshipTypeId): RelationshipTypeDefinition {
 	return RELATIONSHIP_TYPES[id];
+}
+
+/**
+ * Label for the other person in a relationship row on a personnel profile.
+ * Outgoing edge types describe the viewer (e.g. child → parent), so parent/child
+ * labels are inverted for readable copy ("Parent: …" not "Child: …").
+ */
+export function getRelationshipLabelTowardOther(typeId: RelationshipTypeId): string {
+	switch (typeId) {
+		case 'parent':
+			return 'Child';
+		case 'child':
+			return 'Parent';
+		default:
+			return RELATIONSHIP_TYPES[typeId].name;
+	}
 }
 
 export function isRelationshipTypeId(value: string): value is RelationshipTypeId {

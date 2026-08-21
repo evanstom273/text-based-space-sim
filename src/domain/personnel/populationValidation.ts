@@ -7,7 +7,7 @@ import { isCivilianRoleId } from './civilianRoles';
 import { isDivisionId } from './divisions';
 import { POSITIONS, SENIOR_STAFF_POSITION_IDS, isPositionId } from './positions';
 import { isRankId } from './ranks';
-import { RELATIONSHIP_TYPES, type RelationshipTypeId } from './relationships';
+import { RELATIONSHIP_TYPES, canBeBiologicalParentOf, type RelationshipTypeId } from './relationships';
 import type { CrewRosterState } from './roster';
 
 export interface PopulationValidationResult {
@@ -111,7 +111,7 @@ export function validateShipPopulation(roster: CrewRosterState): PopulationValid
 		if (relationship.typeId === 'parent') {
 			const parent = roster.personnel.find((person) => person.id === relationship.fromPersonnelId);
 			const child = roster.personnel.find((person) => person.id === relationship.toPersonnelId);
-			if (parent && child && (parent.ageYears ?? 0) < (child.ageYears ?? 0) + 16) {
+			if (parent && child && !canBeBiologicalParentOf(parent.ageYears, child.ageYears)) {
 				issues.push(`Implausible parent/child ages: ${parent.id} / ${child.id}`);
 			}
 		}

@@ -217,6 +217,10 @@ export {
 	RELATIONSHIP_TYPE_IDS,
 	RELATIONSHIP_TYPES,
 	getRelationshipType,
+	getRelationshipLabelTowardOther,
+	canBeBiologicalParentOf,
+	MIN_PARENT_AGE_YEARS,
+	MIN_PARENT_CHILD_AGE_GAP_YEARS,
 	isRelationshipTypeId,
 	clampAffinity,
 	upsertDirectedRelationship,
@@ -234,6 +238,7 @@ export {
 
 export {
 	replaceRosterRelationships,
+	sanitizeFamilyRelationships,
 	syncRosterAgesFromDateOfBirth,
 } from './roster';
 

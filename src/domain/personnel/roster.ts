@@ -1,7 +1,11 @@
 import type { PositionId } from './positions';
 import { POSITIONS, SENIOR_STAFF_POSITION_IDS } from './positions';
 import type { PersonnelRecord } from './personnel';
-import type { PersonnelRelationship } from './relationships';
+import {
+	canBeBiologicalParentOf,
+	MIN_PARENT_AGE_YEARS,
+	type PersonnelRelationship,
+} from './relationships';
 import { PERSONNEL_SCHEMA_VERSION } from './constants';
 
 /**
@@ -134,6 +138,56 @@ export function replaceRosterRelationships(
 	roster: CrewRosterState,
 	relationships: PersonnelRelationship[],
 ): CrewRosterState {
+	return {
+		...roster,
+		relationships,
+	};
+}
+
+/**
+ * Drop parent/child links that violate minimum parent age or age-gap rules.
+ * Also removes matching inverse child edges.
+ */
+export function sanitizeFamilyRelationships(roster: CrewRosterState): CrewRosterState {
+	const invalidParentPairs = new Set<string>();
+
+	for (const relationship of roster.relationships) {
+		if (relationship.typeId !== 'parent') continue;
+
+		const parent = findPersonnelById(roster, relationship.fromPersonnelId);
+		const child = findPersonnelById(roster, relationship.toPersonnelId);
+		if (!parent || !child) {
+			invalidParentPairs.add(`${relationship.fromPersonnelId}|${relationship.toPersonnelId}`);
+			continue;
+		}
+
+		const implausibleAge = !canBeBiologicalParentOf(parent.ageYears, child.ageYears);
+		const parentTooYoung = (parent.ageYears ?? 0) < MIN_PARENT_AGE_YEARS;
+		const parentIsMinor = parent.civilianRoleId === 'child';
+
+		if (implausibleAge || parentTooYoung || parentIsMinor) {
+			invalidParentPairs.add(`${relationship.fromPersonnelId}|${relationship.toPersonnelId}`);
+		}
+	}
+
+	if (invalidParentPairs.size === 0) {
+		return roster;
+	}
+
+	const relationships = roster.relationships.filter((relationship) => {
+		if (relationship.typeId === 'parent') {
+			return !invalidParentPairs.has(
+				`${relationship.fromPersonnelId}|${relationship.toPersonnelId}`,
+			);
+		}
+		if (relationship.typeId === 'child') {
+			return !invalidParentPairs.has(
+				`${relationship.toPersonnelId}|${relationship.fromPersonnelId}`,
+			);
+		}
+		return true;
+	});
+
 	return {
 		...roster,
 		relationships,

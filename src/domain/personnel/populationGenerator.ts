@@ -15,6 +15,7 @@ import { getPosition, type PositionId } from './positions';
 import { validateShipPopulation } from './populationValidation';
 import type { RankId } from './ranks';
 import {
+	canBeBiologicalParentOf,
 	hasRelationship,
 	linkBidirectionalRelationship,
 	type PersonnelRelationship,
@@ -22,6 +23,7 @@ import {
 import {
 	createEmptyCrewRoster,
 	findPersonnelById,
+	sanitizeFamilyRelationships,
 	type CrewRosterState,
 } from './roster';
 import { createEmptySkillScores, type ProfessionalSkillScores } from './skills';
@@ -404,30 +406,37 @@ function generateFamiliesAndCivilians(
 
 		for (let childIndex = 0; childIndex < childCount; childIndex += 1) {
 			if (maxChildAge < 1) break;
+			const childAgeYears = randomInt(1, maxChildAge);
 			const childSpecies = chance(0.5) ? officer.speciesId : spouse.speciesId;
 			const child = createCivilian({
 				roleId: 'child',
-				ageYears: randomInt(1, maxChildAge),
+				ageYears: childAgeYears,
 				speciesId: childSpecies,
 				gender: pickGenderForSpecies(childSpecies),
 				lastName: childSurname,
 			});
 			extras.push(child);
 			childIds.push(child.id);
-			relationships = linkBidirectionalRelationship(
-				relationships,
-				officer.id,
-				child.id,
-				'parent',
-				randomInt(70, 95),
-			);
-			relationships = linkBidirectionalRelationship(
-				relationships,
-				spouse.id,
-				child.id,
-				'parent',
-				randomInt(70, 95),
-			);
+
+			if (
+				canBeBiologicalParentOf(officer.ageYears, childAgeYears) &&
+				canBeBiologicalParentOf(spouseAge, childAgeYears)
+			) {
+				relationships = linkBidirectionalRelationship(
+					relationships,
+					officer.id,
+					child.id,
+					'parent',
+					randomInt(70, 95),
+				);
+				relationships = linkBidirectionalRelationship(
+					relationships,
+					spouse.id,
+					child.id,
+					'parent',
+					randomInt(70, 95),
+				);
+			}
 		}
 
 		for (let i = 0; i < childIds.length; i += 1) {
@@ -461,10 +470,12 @@ function generateFamiliesAndCivilians(
 		};
 		const [minAge, maxAge] = ageRanges[roleId];
 		const speciesId = pickSpeciesForCrew();
+		const ageYears = randomInt(minAge, maxAge);
+		const resolvedRoleId: CivilianRoleId = ageYears < 18 ? 'child' : roleId;
 		extras.push(
 			createCivilian({
-				roleId,
-				ageYears: randomInt(minAge, maxAge),
+				roleId: resolvedRoleId,
+				ageYears,
 				speciesId,
 				gender: pickGenderForSpecies(speciesId),
 			}),
@@ -567,7 +578,7 @@ export function populateShipRoster(baseRoster: CrewRosterState): CrewRosterState
 		console.warn('Ship population validation warnings:', validation.issues.slice(0, 12));
 	}
 
-	return roster;
+	return sanitizeFamilyRelationships(roster);
 }
 
 export function createPopulatedCrewRoster(baseRoster: CrewRosterState): CrewRosterState {

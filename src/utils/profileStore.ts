@@ -13,6 +13,7 @@ import {
 } from '../domain/personnel/populationGenerator';
 import {
 	createEmptyCrewRoster,
+	sanitizeFamilyRelationships,
 	type CrewRosterState,
 } from '../domain/personnel/roster';
 import type { PersonnelRecord } from '../domain/personnel/personnel';
@@ -88,6 +89,11 @@ function sanitizeCrew(raw: unknown): CrewRosterState | undefined {
 	};
 }
 
+function finalizeCrewRoster(crew: CrewRosterState | undefined): CrewRosterState | undefined {
+	if (!crew) return undefined;
+	return sanitizeFamilyRelationships(crew);
+}
+
 function sanitizeProfile(raw: Partial<CommandProfile>): CommandProfile | null {
 	if (!raw.id || !raw.captain?.name || !raw.vessel?.name || !raw.vessel?.registry) {
 		return null;
@@ -101,6 +107,7 @@ function sanitizeProfile(raw: Partial<CommandProfile>): CommandProfile | null {
 		crew = ensureShipPopulation(crew);
 		updatedAt = Date.now();
 	}
+	crew = finalizeCrewRoster(crew);
 
 	return {
 		id: raw.id,
@@ -152,7 +159,9 @@ export function loadProfileStore(): ProfileStoreData {
 			const before = rawProfiles.find((entry) => entry?.id === profile.id);
 			const previousCount = before?.future?.crew?.personnel?.length ?? 0;
 			const nextCount = profile.future.crew?.personnel.length ?? 0;
-			return nextCount > previousCount;
+			const previousRelationships = before?.future?.crew?.relationships?.length ?? 0;
+			const nextRelationships = profile.future.crew?.relationships.length ?? 0;
+			return nextCount > previousCount || nextRelationships !== previousRelationships;
 		});
 		if (needsPersist) {
 			saveProfileStore(store);
@@ -214,7 +223,7 @@ function buildCrewRoster(input: CreateProfileInput): CrewRosterState {
 	if (isUnpopulatedSeniorRoster(populated)) {
 		console.error('Ship population failed to expand beyond senior staff');
 	}
-	return populated;
+	return sanitizeFamilyRelationships(populated);
 }
 
 export function createCommandProfile(input: CreateProfileInput): CommandProfile {
