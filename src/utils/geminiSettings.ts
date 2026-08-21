@@ -1,3 +1,12 @@
+import { generateGeminiContent } from '../services/gemini/geminiApi';
+
+/**
+ * Terminal-local Gemini credentials and model selection.
+ *
+ * Stored under `union-terminal-gemini-settings` in localStorage only.
+ * Intentionally separate from Command Profile / exportable save data.
+ * Conversation transcripts live on the profile; API keys never do.
+ */
 const STORAGE_KEY = 'union-terminal-gemini-settings';
 const STORAGE_VERSION = 1;
 
@@ -27,7 +36,7 @@ export interface GeminiValidationResult {
 	responseText?: string;
 }
 
-const DEFAULT_MODEL_ID: GeminiModelId = GEMINI_MODELS[0].id;
+export const DEFAULT_GEMINI_MODEL_ID: GeminiModelId = GEMINI_MODELS[0].id;
 
 function isGeminiModelId(value: unknown): value is GeminiModelId {
 	return typeof value === 'string' && GEMINI_MODELS.some((model) => model.id === value);
@@ -39,7 +48,7 @@ function sanitizeSettings(raw: Partial<GeminiSettings>): GeminiSettings | null {
 
 	return {
 		apiKey,
-		modelId: isGeminiModelId(raw.modelId) ? raw.modelId : DEFAULT_MODEL_ID,
+		modelId: isGeminiModelId(raw.modelId) ? raw.modelId : DEFAULT_GEMINI_MODEL_ID,
 	};
 }
 
@@ -91,40 +100,8 @@ export function clearGeminiSettings(): void {
 	}
 }
 
-function extractResponseText(payload: unknown): string | undefined {
-	if (!payload || typeof payload !== 'object') return undefined;
-
-	const candidates = (payload as { candidates?: unknown }).candidates;
-	if (!Array.isArray(candidates) || candidates.length === 0) return undefined;
-
-	const firstCandidate = candidates[0];
-	if (!firstCandidate || typeof firstCandidate !== 'object') return undefined;
-
-	const content = (firstCandidate as { content?: unknown }).content;
-	if (!content || typeof content !== 'object') return undefined;
-
-	const parts = (content as { parts?: unknown }).parts;
-	if (!Array.isArray(parts)) return undefined;
-
-	const textParts = parts
-		.map((part) => {
-			if (!part || typeof part !== 'object') return '';
-			const text = (part as { text?: unknown }).text;
-			return typeof text === 'string' ? text : '';
-		})
-		.filter(Boolean);
-
-	return textParts.join('').trim() || undefined;
-}
-
-function extractErrorMessage(payload: unknown, fallback: string): string {
-	if (!payload || typeof payload !== 'object') return fallback;
-
-	const error = (payload as { error?: unknown }).error;
-	if (!error || typeof error !== 'object') return fallback;
-
-	const message = (error as { message?: unknown }).message;
-	return typeof message === 'string' && message.trim() ? message.trim() : fallback;
+export function isGeminiConfigured(): boolean {
+	return Boolean(loadGeminiSettings()?.apiKey.trim());
 }
 
 export async function validateGeminiConnection(
@@ -146,61 +123,24 @@ export async function validateGeminiConnection(
 		};
 	}
 
-	const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent`;
+	const response = await generateGeminiContent({
+		modelId,
+		apiKey: trimmedKey,
+		contents: [{ role: 'user', parts: [{ text: 'Reply with exactly: OK' }] }],
+		maxOutputTokens: 16,
+		temperature: 0,
+	});
 
-	try {
-		const response = await fetch(endpoint, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'x-goog-api-key': trimmedKey,
-			},
-			body: JSON.stringify({
-				contents: [
-					{
-						role: 'user',
-						parts: [{ text: 'Reply with exactly: OK' }],
-					},
-				],
-				generationConfig: {
-					maxOutputTokens: 16,
-					temperature: 0,
-				},
-			}),
-		});
-
-		let payload: unknown = null;
-		try {
-			payload = await response.json();
-		} catch {
-			payload = null;
-		}
-
-		if (!response.ok) {
-			return {
-				ok: false,
-				message: extractErrorMessage(payload, `Gemini API request failed (${response.status}).`),
-			};
-		}
-
-		const responseText = extractResponseText(payload);
-		if (!responseText) {
-			return {
-				ok: false,
-				message: 'Gemini responded, but no text was returned for the validation prompt.',
-			};
-		}
-
-		return {
-			ok: true,
-			message: `Connection verified with ${getGeminiModelLabel(modelId)}.`,
-			responseText,
-		};
-	} catch (error) {
-		const detail = error instanceof Error ? error.message : 'Unknown network error';
+	if (!response.ok || !response.text) {
 		return {
 			ok: false,
-			message: `Could not reach Gemini API: ${detail}`,
+			message: response.message,
 		};
 	}
+
+	return {
+		ok: true,
+		message: `Connection verified with ${getGeminiModelLabel(modelId)}.`,
+		responseText: response.text,
+	};
 }
