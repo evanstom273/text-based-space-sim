@@ -30,3 +30,4 @@ release
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+node_modules
