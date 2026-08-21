@@ -16,6 +16,7 @@ import {
 	getPosition,
 	getRank,
 	getRelationshipType,
+	getRelationshipLabelTowardOther,
 	getSpecies,
 	listRelationshipsFrom,
 	listRosterForDisplay,
@@ -269,7 +270,7 @@ function PersonnelProfileView({
 			const type = getRelationshipType(relationship.typeId);
 			return {
 				id: relationship.id,
-				label: type.name,
+				label: getRelationshipLabelTowardOther(relationship.typeId),
 				category: type.category,
 				otherName: formatPersonnelDisplayName(other.identity),
 			};
