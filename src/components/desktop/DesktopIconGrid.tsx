@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { APP_LIST } from '../../config/apps.config';
 import { useWindowManager } from '../../context/WindowManagerContext';
 import { useIsMobile } from '../../hooks/useIsMobile';
@@ -10,7 +10,6 @@ const CELL_WIDTH = 92;
 const CELL_HEIGHT = 98;
 const GRID_PADDING = 28;
 const DRAG_THRESHOLD = 6;
-const DOUBLE_TAP_MS = 350;
 
 function buildInitialIcons(): DesktopIconItem[] {
 	return APP_LIST.map((app) => ({
@@ -53,9 +52,16 @@ export function DesktopIconGrid() {
 	const [icons, setIcons] = useState<DesktopIconItem[]>(buildInitialIcons);
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [draggingId, setDraggingId] = useState<string | null>(null);
-	const dragStartRef = useRef<{ x: number; y: number; col: number; row: number } | null>(null);
-	const lastTapRef = useRef<{ id: string; time: number } | null>(null);
+	const dragStartRef = useRef<{ x: number; y: number; col: number; row: number; iconId: string } | null>(
+		null,
+	);
+	const pointerCleanupRef = useRef<(() => void) | null>(null);
 	const gridRef = useRef<HTMLDivElement>(null);
+
+	const clearPointerListeners = useCallback(() => {
+		pointerCleanupRef.current?.();
+		pointerCleanupRef.current = null;
+	}, []);
 
 	const handleOpen = useCallback(
 		(appId: string) => {
@@ -64,63 +70,54 @@ export function DesktopIconGrid() {
 		[openWindow],
 	);
 
-	const handleIconPointerDown = (icon: DesktopIconItem, clientX: number, clientY: number) => {
-		if (isMobile) return;
+	const handleIconPointerDown = (icon: DesktopIconItem, event: ReactPointerEvent<HTMLButtonElement>) => {
+		if (isMobile || event.button !== 0) return;
+
+		event.stopPropagation();
 		setSelectedId(icon.id);
-		dragStartRef.current = { x: clientX, y: clientY, col: icon.gridCol, row: icon.gridRow };
-	};
+		clearPointerListeners();
 
-	const handleIconClick = (icon: DesktopIconItem) => {
-		if (isMobile) {
-			handleOpen(icon.appId);
-			return;
-		}
-
-		setSelectedId(icon.id);
-
-		const now = Date.now();
-		const lastTap = lastTapRef.current;
-		if (lastTap && lastTap.id === icon.id && now - lastTap.time < DOUBLE_TAP_MS) {
-			handleOpen(icon.appId);
-			lastTapRef.current = null;
-			return;
-		}
-		lastTapRef.current = { id: icon.id, time: now };
-	};
-
-	useEffect(() => {
-		if (isMobile || !dragStartRef.current) return;
-
-		const handlePointerMove = (event: PointerEvent) => {
-			const start = dragStartRef.current;
-			if (!start) return;
-
-			const dx = event.clientX - start.x;
-			const dy = event.clientY - start.y;
-			if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
-
-			setDraggingId(selectedId);
+		const pointerId = event.pointerId;
+		dragStartRef.current = {
+			x: event.clientX,
+			y: event.clientY,
+			col: icon.gridCol,
+			row: icon.gridRow,
+			iconId: icon.id,
 		};
 
-		const handlePointerUp = (event: PointerEvent) => {
+		const handlePointerMove = (moveEvent: PointerEvent) => {
 			const start = dragStartRef.current;
-			if (!start || !selectedId) {
+			if (!start || moveEvent.pointerId !== pointerId) return;
+
+			const dx = moveEvent.clientX - start.x;
+			const dy = moveEvent.clientY - start.y;
+			if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+
+			setDraggingId(start.iconId);
+		};
+
+		const handlePointerUp = (upEvent: PointerEvent) => {
+			const start = dragStartRef.current;
+			clearPointerListeners();
+
+			if (!start || upEvent.pointerId !== pointerId) {
 				dragStartRef.current = null;
 				setDraggingId(null);
 				return;
 			}
 
-			const dx = event.clientX - start.x;
-			const dy = event.clientY - start.y;
+			const dx = upEvent.clientX - start.x;
+			const dy = upEvent.clientY - start.y;
 
 			if (Math.hypot(dx, dy) >= DRAG_THRESHOLD) {
-				const col = Math.round((event.clientX - GRID_PADDING) / CELL_WIDTH);
-				const row = Math.round((event.clientY - GRID_PADDING) / CELL_HEIGHT);
+				const col = Math.round((upEvent.clientX - GRID_PADDING) / CELL_WIDTH);
+				const row = Math.round((upEvent.clientY - GRID_PADDING) / CELL_HEIGHT);
 				setIcons((prev) => {
-					const others = prev.filter((item) => item.id !== selectedId);
+					const others = prev.filter((item) => item.id !== start.iconId);
 					const free = findNearestFreeCell(others, col, row);
 					return prev.map((item) =>
-						item.id === selectedId
+						item.id === start.iconId
 							? { ...item, gridCol: free.col, gridRow: free.row }
 							: item,
 					);
@@ -133,11 +130,14 @@ export function DesktopIconGrid() {
 
 		window.addEventListener('pointermove', handlePointerMove);
 		window.addEventListener('pointerup', handlePointerUp);
-		return () => {
+		window.addEventListener('pointercancel', handlePointerUp);
+
+		pointerCleanupRef.current = () => {
 			window.removeEventListener('pointermove', handlePointerMove);
 			window.removeEventListener('pointerup', handlePointerUp);
+			window.removeEventListener('pointercancel', handlePointerUp);
 		};
-	}, [isMobile, selectedId]);
+	};
 
 	const renderIconContent = (icon: DesktopIconItem, isSelected: boolean) => (
 		<>
@@ -166,7 +166,7 @@ export function DesktopIconGrid() {
 			ref={gridRef}
 			className={`absolute inset-x-0 top-0 z-10 overflow-auto no-scrollbar ${isMobile ? 'bottom-16 px-3 pt-3' : 'bottom-16 px-4 pt-4'}`}
 			style={{ paddingBottom: TASKBAR_HEIGHT }}
-			onClick={() => setSelectedId(null)}
+			onPointerDown={() => setSelectedId(null)}
 		>
 			<div className={isMobile ? 'grid grid-cols-3 gap-4' : 'relative min-h-full max-w-[300px]'}>
 				{icons.map((icon) => {
@@ -197,13 +197,14 @@ export function DesktopIconGrid() {
 								left: GRID_PADDING + icon.gridCol * CELL_WIDTH,
 								top: GRID_PADDING + icon.gridRow * CELL_HEIGHT,
 							}}
+							onPointerDown={(event) => handleIconPointerDown(icon, event)}
+							onDoubleClick={(event) => {
+								event.stopPropagation();
+								handleOpen(icon.appId);
+							}}
 							onClick={(event) => {
 								event.stopPropagation();
-								handleIconClick(icon);
-							}}
-							onPointerDown={(event) => {
-								event.stopPropagation();
-								handleIconPointerDown(icon, event.clientX, event.clientY);
+								setSelectedId(icon.id);
 							}}
 						>
 							{renderIconContent(icon, isSelected)}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useRef, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { Minus, Square, X, Copy } from 'lucide-react';
 import { getAppById } from '../../config/apps.config';
 import {
@@ -16,6 +16,22 @@ interface WindowFrameProps {
 
 type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
+type DragState = {
+	startX: number;
+	startY: number;
+	originX: number;
+	originY: number;
+	pointerId: number;
+};
+
+type ResizeState = {
+	dir: ResizeDirection;
+	startX: number;
+	startY: number;
+	originRect: { x: number; y: number; width: number; height: number };
+	pointerId: number;
+};
+
 export function WindowFrame({ window: win }: WindowFrameProps) {
 	const {
 		focusWindow,
@@ -29,18 +45,9 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 	} = useWindowManager();
 	const isMobile = useIsMobile();
 	const frameRef = useRef<HTMLDivElement>(null);
-	const dragStateRef = useRef<{
-		startX: number;
-		startY: number;
-		originX: number;
-		originY: number;
-	} | null>(null);
-	const resizeStateRef = useRef<{
-		dir: ResizeDirection;
-		startX: number;
-		startY: number;
-		originRect: { x: number; y: number; width: number; height: number };
-	} | null>(null);
+	const dragStateRef = useRef<DragState | null>(null);
+	const resizeStateRef = useRef<ResizeState | null>(null);
+	const pointerCleanupRef = useRef<(() => void) | null>(null);
 
 	const appDef = getAppById(win.appId);
 	const AppComponent = appDef?.component;
@@ -49,75 +56,60 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 	const isMaximised = win.state === 'maximised';
 	const canManipulate = !isMobile && !isMaximised && !isSnapped;
 
-	if (win.state === 'minimised') {
-		return null;
-	}
+	const clearPointerListeners = () => {
+		pointerCleanupRef.current?.();
+		pointerCleanupRef.current = null;
+	};
 
-	const handleTitlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-		if (isMobile || isMaximised || isSnapped) return;
-		event.preventDefault();
-		focusWindow(win.id);
-
-		const frame = frameRef.current;
-		if (!frame) return;
-
-		frame.setPointerCapture(event.pointerId);
-		dragStateRef.current = {
-			startX: event.clientX,
-			startY: event.clientY,
-			originX: win.rect.x,
-			originY: win.rect.y,
+	useEffect(() => {
+		return () => {
+			clearPointerListeners();
+			setWindowDragging(false, 'none');
 		};
-		setWindowDragging(true, 'none');
-	};
+	}, [setWindowDragging]);
 
-	const handleTitlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-		const drag = dragStateRef.current;
+	useEffect(() => {
 		const frame = frameRef.current;
-		if (!drag || !frame) return;
-
-		const dx = event.clientX - drag.startX;
-		const dy = event.clientY - drag.startY;
-		const nextX = drag.originX + dx;
-		const nextY = drag.originY + dy;
-
-		frame.style.transform = `translate3d(${nextX}px, ${nextY}px, 0)`;
-
-		const snap = detectSnapTarget(event.clientX, event.clientY);
-		setWindowDragging(true, snap);
-	};
-
-	const handleTitlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-		const drag = dragStateRef.current;
-		const frame = frameRef.current;
-		if (!drag || !frame) return;
-
-		frame.releasePointerCapture(event.pointerId);
-
-		const dx = event.clientX - drag.startX;
-		const dy = event.clientY - drag.startY;
-		const nextX = Math.max(0, drag.originX + dx);
-		const nextY = Math.max(0, drag.originY + dy);
-
-		const snap = detectSnapTarget(event.clientX, event.clientY);
-		dragStateRef.current = null;
-		setWindowDragging(false, 'none');
-
-		if (snap !== 'none') {
-			frame.style.transform = '';
-			applySnap(win.id, snap);
-			return;
-		}
-
+		if (!frame || win.state === 'normal') return;
 		frame.style.transform = '';
-		updateWindowRect(win.id, { x: nextX, y: nextY });
+		frame.style.width = '';
+		frame.style.height = '';
+	}, [win.state, win.rect]);
+
+	const bindPointerSession = (
+		pointerId: number,
+		onMove: (event: PointerEvent) => void,
+		onEnd: (event: PointerEvent) => void,
+	) => {
+		clearPointerListeners();
+
+		const handleMove = (event: PointerEvent) => {
+			if (event.pointerId !== pointerId) return;
+			onMove(event);
+		};
+
+		const handleEnd = (event: PointerEvent) => {
+			if (event.pointerId !== pointerId) return;
+			clearPointerListeners();
+			onEnd(event);
+		};
+
+		window.addEventListener('pointermove', handleMove);
+		window.addEventListener('pointerup', handleEnd);
+		window.addEventListener('pointercancel', handleEnd);
+
+		pointerCleanupRef.current = () => {
+			window.removeEventListener('pointermove', handleMove);
+			window.removeEventListener('pointerup', handleEnd);
+			window.removeEventListener('pointercancel', handleEnd);
+		};
 	};
 
-	const handleResizePointerDown = (
-		event: PointerEvent<HTMLDivElement>,
-		dir: ResizeDirection,
-	) => {
-		if (!canManipulate) return;
+	const handleTitlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+		if (isMobile || isMaximised || isSnapped) return;
+		if (event.button !== 0) return;
+		if ((event.target as HTMLElement).closest('button')) return;
+
 		event.preventDefault();
 		event.stopPropagation();
 		focusWindow(win.id);
@@ -125,71 +117,136 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 		const frame = frameRef.current;
 		if (!frame) return;
 
-		frame.setPointerCapture(event.pointerId);
+		const pointerId = event.pointerId;
+		dragStateRef.current = {
+			startX: event.clientX,
+			startY: event.clientY,
+			originX: win.rect.x,
+			originY: win.rect.y,
+			pointerId,
+		};
+		setWindowDragging(true, 'none');
+
+		bindPointerSession(
+			pointerId,
+			(moveEvent) => {
+				const drag = dragStateRef.current;
+				if (!drag || !frameRef.current) return;
+
+				const dx = moveEvent.clientX - drag.startX;
+				const dy = moveEvent.clientY - drag.startY;
+				const nextX = drag.originX + dx;
+				const nextY = drag.originY + dy;
+
+				frameRef.current.style.transform = `translate3d(${nextX}px, ${nextY}px, 0)`;
+				setWindowDragging(true, detectSnapTarget(moveEvent.clientX, moveEvent.clientY));
+			},
+			(upEvent) => {
+				const drag = dragStateRef.current;
+				const frame = frameRef.current;
+				if (!drag || !frame) return;
+
+				const dx = upEvent.clientX - drag.startX;
+				const dy = upEvent.clientY - drag.startY;
+				const nextX = Math.max(0, drag.originX + dx);
+				const nextY = Math.max(0, drag.originY + dy);
+				const snap = detectSnapTarget(upEvent.clientX, upEvent.clientY);
+
+				dragStateRef.current = null;
+				setWindowDragging(false, 'none');
+
+				if (snap !== 'none') {
+					frame.style.transform = '';
+					applySnap(win.id, snap);
+					return;
+				}
+
+				frame.style.transform = '';
+				updateWindowRect(win.id, { x: nextX, y: nextY });
+			},
+		);
+	};
+
+	const handleResizePointerDown = (
+		event: ReactPointerEvent<HTMLDivElement>,
+		dir: ResizeDirection,
+	) => {
+		if (!canManipulate) return;
+		if (event.button !== 0) return;
+
+		event.preventDefault();
+		event.stopPropagation();
+		focusWindow(win.id);
+
+		const frame = frameRef.current;
+		if (!frame) return;
+
+		const pointerId = event.pointerId;
 		resizeStateRef.current = {
 			dir,
 			startX: event.clientX,
 			startY: event.clientY,
 			originRect: { ...win.rect },
+			pointerId,
 		};
-	};
 
-	const handleResizePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-		const resize = resizeStateRef.current;
-		const frame = frameRef.current;
-		if (!resize || !frame) return;
+		bindPointerSession(
+			pointerId,
+			(moveEvent) => {
+				const resize = resizeStateRef.current;
+				const liveFrame = frameRef.current;
+				if (!resize || !liveFrame) return;
 
-		const dx = event.clientX - resize.startX;
-		const dy = event.clientY - resize.startY;
-		const { dir, originRect } = resize;
+				const dx = moveEvent.clientX - resize.startX;
+				const dy = moveEvent.clientY - resize.startY;
+				const { dir: direction, originRect } = resize;
 
-		let { x, y, width, height } = originRect;
+				let { x, y, width, height } = originRect;
 
-		if (dir.includes('e')) width = Math.max(win.minWidth, originRect.width + dx);
-		if (dir.includes('w')) {
-			width = Math.max(win.minWidth, originRect.width - dx);
-			x = originRect.x + (originRect.width - width);
-		}
-		if (dir.includes('s')) height = Math.max(win.minHeight, originRect.height + dy);
-		if (dir.includes('n')) {
-			height = Math.max(win.minHeight, originRect.height - dy);
-			y = originRect.y + (originRect.height - height);
-		}
+				if (direction.includes('e')) width = Math.max(win.minWidth, originRect.width + dx);
+				if (direction.includes('w')) {
+					width = Math.max(win.minWidth, originRect.width - dx);
+					x = originRect.x + (originRect.width - width);
+				}
+				if (direction.includes('s')) height = Math.max(win.minHeight, originRect.height + dy);
+				if (direction.includes('n')) {
+					height = Math.max(win.minHeight, originRect.height - dy);
+					y = originRect.y + (originRect.height - height);
+				}
 
-		frame.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-		frame.style.width = `${width}px`;
-		frame.style.height = `${height}px`;
-	};
+				liveFrame.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+				liveFrame.style.width = `${width}px`;
+				liveFrame.style.height = `${height}px`;
+			},
+			(upEvent) => {
+				const resize = resizeStateRef.current;
+				const liveFrame = frameRef.current;
+				if (!resize || !liveFrame) return;
 
-	const handleResizePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-		const resize = resizeStateRef.current;
-		const frame = frameRef.current;
-		if (!resize || !frame) return;
+				const dx = upEvent.clientX - resize.startX;
+				const dy = upEvent.clientY - resize.startY;
+				const { dir: direction, originRect } = resize;
 
-		frame.releasePointerCapture(event.pointerId);
+				let { x, y, width, height } = originRect;
 
-		const dx = event.clientX - resize.startX;
-		const dy = event.clientY - resize.startY;
-		const { dir, originRect } = resize;
+				if (direction.includes('e')) width = Math.max(win.minWidth, originRect.width + dx);
+				if (direction.includes('w')) {
+					width = Math.max(win.minWidth, originRect.width - dx);
+					x = originRect.x + (originRect.width - width);
+				}
+				if (direction.includes('s')) height = Math.max(win.minHeight, originRect.height + dy);
+				if (direction.includes('n')) {
+					height = Math.max(win.minHeight, originRect.height - dy);
+					y = originRect.y + (originRect.height - height);
+				}
 
-		let { x, y, width, height } = originRect;
-
-		if (dir.includes('e')) width = Math.max(win.minWidth, originRect.width + dx);
-		if (dir.includes('w')) {
-			width = Math.max(win.minWidth, originRect.width - dx);
-			x = originRect.x + (originRect.width - width);
-		}
-		if (dir.includes('s')) height = Math.max(win.minHeight, originRect.height + dy);
-		if (dir.includes('n')) {
-			height = Math.max(win.minHeight, originRect.height - dy);
-			y = originRect.y + (originRect.height - height);
-		}
-
-		resizeStateRef.current = null;
-		frame.style.transform = '';
-		frame.style.width = '';
-		frame.style.height = '';
-		updateWindowRect(win.id, { x, y, width, height });
+				resizeStateRef.current = null;
+				liveFrame.style.transform = '';
+				liveFrame.style.width = '';
+				liveFrame.style.height = '';
+				updateWindowRect(win.id, { x, y, width, height });
+			},
+		);
 	};
 
 	const handleMaximizeClick = () => {
@@ -199,14 +256,6 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 			maximizeWindow(win.id);
 		}
 	};
-
-	useEffect(() => {
-		const frame = frameRef.current;
-		if (!frame || win.state === 'normal') return;
-		frame.style.transform = '';
-		frame.style.width = '';
-		frame.style.height = '';
-	}, [win.state, win.rect]);
 
 	const getFrameStyle = (): CSSProperties => {
 		if (isMobile || isMaximised) {
@@ -259,11 +308,13 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 			<div
 				className={`absolute ${className}`}
 				onPointerDown={(event) => handleResizePointerDown(event, dir)}
-				onPointerMove={handleResizePointerMove}
-				onPointerUp={handleResizePointerUp}
 			/>
 		);
 	};
+
+	if (win.state === 'minimised') {
+		return null;
+	}
 
 	return (
 		<div
@@ -283,8 +334,6 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 						: 'border-[var(--border-silver)] bg-gradient-to-r from-[#242424] to-[#181818]'
 				} ${canManipulate ? 'cursor-grab active:cursor-grabbing' : ''}`}
 				onPointerDown={handleTitlePointerDown}
-				onPointerMove={handleTitlePointerMove}
-				onPointerUp={handleTitlePointerUp}
 			>
 				<div className="flex min-w-0 items-center gap-2">
 					<div
@@ -312,6 +361,7 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 						<button
 							type="button"
 							className="flex h-7 w-7 items-center justify-center border border-transparent text-[var(--text-silver-dim)] hover:border-[var(--border-silver)] hover:text-white terminal-bevel-sm"
+							onPointerDown={(event) => event.stopPropagation()}
 							onClick={(event) => {
 								event.stopPropagation();
 								minimizeWindow(win.id);
@@ -325,6 +375,7 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 						<button
 							type="button"
 							className="flex h-7 w-7 items-center justify-center border border-transparent text-[var(--text-silver-dim)] hover:border-[var(--border-silver)] hover:text-white terminal-bevel-sm"
+							onPointerDown={(event) => event.stopPropagation()}
 							onClick={(event) => {
 								event.stopPropagation();
 								handleMaximizeClick();
@@ -337,6 +388,7 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 					<button
 						type="button"
 						className="flex h-7 w-7 items-center justify-center border border-transparent text-[var(--text-silver-dim)] hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 terminal-bevel-sm"
+						onPointerDown={(event) => event.stopPropagation()}
 						onClick={(event) => {
 							event.stopPropagation();
 							closeWindow(win.id);
@@ -350,14 +402,14 @@ export function WindowFrame({ window: win }: WindowFrameProps) {
 			<div className="module-workspace min-h-0 flex-1 overflow-hidden">
 				{AppComponent && <AppComponent windowId={win.id} appId={win.appId} />}
 			</div>
-			{renderResizeHandle('n', 'top-0 left-2 right-2 h-1 cursor-n-resize')}
-			{renderResizeHandle('s', 'bottom-0 left-2 right-2 h-1 cursor-s-resize')}
-			{renderResizeHandle('e', 'top-2 bottom-2 right-0 w-1 cursor-e-resize')}
-			{renderResizeHandle('w', 'top-2 bottom-2 left-0 w-1 cursor-w-resize')}
-			{renderResizeHandle('ne', 'top-0 right-0 h-3 w-3 cursor-ne-resize')}
-			{renderResizeHandle('nw', 'top-0 left-0 h-3 w-3 cursor-nw-resize')}
-			{renderResizeHandle('se', 'bottom-0 right-0 h-3 w-3 cursor-se-resize')}
-			{renderResizeHandle('sw', 'bottom-0 left-0 h-3 w-3 cursor-sw-resize')}
+			{renderResizeHandle('n', 'top-0 left-1 right-1 h-2 cursor-n-resize')}
+			{renderResizeHandle('s', 'bottom-0 left-1 right-1 h-2 cursor-s-resize')}
+			{renderResizeHandle('e', 'top-2 bottom-2 right-0 w-2 cursor-e-resize')}
+			{renderResizeHandle('w', 'top-2 bottom-2 left-0 w-2 cursor-w-resize')}
+			{renderResizeHandle('ne', 'top-0 right-0 h-4 w-4 cursor-ne-resize')}
+			{renderResizeHandle('nw', 'top-0 left-0 h-4 w-4 cursor-nw-resize')}
+			{renderResizeHandle('se', 'bottom-0 right-0 h-4 w-4 cursor-se-resize')}
+			{renderResizeHandle('sw', 'bottom-0 left-0 h-4 w-4 cursor-sw-resize')}
 		</div>
 	);
 }
