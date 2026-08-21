@@ -145,6 +145,19 @@ export function pickGenderForSpecies(speciesId: SpeciesId): PersonnelGender {
 export function generatePersonnelName(
 	speciesId: SpeciesId,
 	gender: PersonnelGender,
+	options?: { lastName?: string },
+): { firstName: string; lastName: string } {
+	const forcedLastName = options?.lastName?.trim();
+	const generated = generatePersonnelNameInternal(speciesId, gender);
+	if (forcedLastName) {
+		return { firstName: generated.firstName, lastName: forcedLastName };
+	}
+	return generated;
+}
+
+function generatePersonnelNameInternal(
+	speciesId: SpeciesId,
+	gender: PersonnelGender,
 ): { firstName: string; lastName: string } {
 	switch (speciesId) {
 		case 'moclan':

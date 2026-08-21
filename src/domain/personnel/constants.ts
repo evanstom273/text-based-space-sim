@@ -21,4 +21,4 @@ export type ModifierDelta = -2 | -1 | 0 | 1 | 2;
 export const EFFECTIVE_SOFT_CLAMP_MIN = 0;
 export const EFFECTIVE_SOFT_CLAMP_MAX = 12;
 
-export const PERSONNEL_SCHEMA_VERSION = 1 as const;
+export const PERSONNEL_SCHEMA_VERSION = 2 as const;

@@ -1,6 +1,7 @@
 import type { PositionId } from './positions';
 import { POSITIONS, SENIOR_STAFF_POSITION_IDS } from './positions';
 import type { PersonnelRecord } from './personnel';
+import type { PersonnelRelationship } from './relationships';
 import { PERSONNEL_SCHEMA_VERSION } from './constants';
 
 /**
@@ -27,6 +28,8 @@ export interface CrewRosterState {
 	/** Player Captain personnel ID (same stat model as crew). */
 	captainPersonnelId: string | null;
 	seniorStaff: SeniorStaffState;
+	/** Bidirectional professional + personal relationships for the ship population. */
+	relationships: PersonnelRelationship[];
 }
 
 export function createEmptyCrewRoster(): CrewRosterState {
@@ -38,6 +41,7 @@ export function createEmptyCrewRoster(): CrewRosterState {
 			byPosition: {},
 			secondOfficerPersonnelId: null,
 		},
+		relationships: [],
 	};
 }
 
@@ -111,7 +115,12 @@ export function listRosterForDisplay(roster: CrewRosterState): RosterListEntry[]
 		seen.add(person.id);
 		entries.push({
 			person,
-			roleLabel: POSITIONS[person.positionId]?.name ?? 'Crew',
+			roleLabel:
+				person.personnelKind === 'civilian'
+					? 'Civilian'
+					: person.positionId
+						? (POSITIONS[person.positionId]?.name ?? 'Crew')
+						: 'Crew',
 			isCaptain: false,
 			isSeniorStaff: false,
 			isSecondOfficer: roster.seniorStaff.secondOfficerPersonnelId === person.id,
@@ -119,4 +128,38 @@ export function listRosterForDisplay(roster: CrewRosterState): RosterListEntry[]
 	}
 
 	return entries;
+}
+
+export function replaceRosterRelationships(
+	roster: CrewRosterState,
+	relationships: PersonnelRelationship[],
+): CrewRosterState {
+	return {
+		...roster,
+		relationships,
+	};
+}
+
+export function syncRosterAgesFromDateOfBirth(
+	roster: CrewRosterState,
+	absoluteDay: number,
+	getAgeYears: (dateOfBirth: string, absoluteDay: number) => number,
+): CrewRosterState {
+	let changed = false;
+	const personnel = roster.personnel.map((person) => {
+		if (!person.dateOfBirth) return person;
+		const nextAge = getAgeYears(person.dateOfBirth, absoluteDay);
+		if (person.ageYears === nextAge) return person;
+		changed = true;
+		return {
+			...person,
+			ageYears: nextAge,
+			updatedAt: Date.now(),
+		};
+	});
+	if (!changed) return roster;
+	return {
+		...roster,
+		personnel,
+	};
 }

@@ -34,10 +34,10 @@ export function SeniorCandidateCard({
 	onAccept,
 	onReroll,
 }: SeniorCandidateCardProps) {
-	const rank = getRank(candidate.rankId);
+	const rank = getRank(candidate.rankId!);
 	const species = getSpecies(candidate.speciesId);
-	const division = getDivision(candidate.divisionId);
-	const position = getPosition(candidate.positionId);
+	const division = getDivision(candidate.divisionId!);
+	const position = getPosition(candidate.positionId!);
 
 	return (
 		<article className={`candidate-card terminal-bevel-sm ${locked ? 'candidate-card--locked' : ''}`}>

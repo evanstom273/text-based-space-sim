@@ -422,8 +422,8 @@ export function CreateProfileScreen() {
 						<div className="second-officer-list">
 							{secondOfficerEligible.map((officer) => {
 								const selected = secondOfficerId === officer.id;
-								const rank = getRank(officer.rankId);
-								const position = getPosition(officer.positionId);
+								const rank = getRank(officer.rankId!);
+								const position = getPosition(officer.positionId!);
 								return (
 									<button
 										key={officer.id}
@@ -463,7 +463,7 @@ export function CreateProfileScreen() {
 							{SENIOR_STAFF_SELECTION_POSITIONS.map((positionId) => {
 								const officer = candidates[positionId];
 								if (!officer) return null;
-								const rank = getRank(officer.rankId);
+								const rank = getRank(officer.rankId!);
 								const isSecond = officer.id === secondOfficerId;
 								return (
 									<div key={positionId} className="review-block">
@@ -484,7 +484,7 @@ export function CreateProfileScreen() {
 									{(() => {
 										const officer = lockedOfficers.find((entry) => entry.id === secondOfficerId);
 										if (!officer) return '—';
-										return `${getRank(officer.rankId).abbreviation} ${formatPersonnelDisplayName(officer.identity)}`;
+										return `${getRank(officer.rankId!).abbreviation} ${formatPersonnelDisplayName(officer.identity)}`;
 									})()}
 								</div>
 								<div className="review-sub">Command appointment</div>

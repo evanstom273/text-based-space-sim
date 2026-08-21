@@ -1,4 +1,5 @@
 import { createEmptyAttributeScores, type CoreAttributeId, type CoreAttributeScores } from './attributes';
+import { buildDateOfBirthForAge } from './age';
 import { createPersonnelRecord, type PersonnelRecord } from './personnel';
 import { generatePersonnelName, pickGenderForSpecies } from './names';
 import { getPosition, type PositionId } from './positions';
@@ -219,6 +220,8 @@ export function generateSeniorStaffCandidate(positionId: PositionId): PersonnelR
 		speciesId,
 		gender,
 		ageYears,
+		dateOfBirth: buildDateOfBirthForAge(ageYears),
+		personnelKind: 'union',
 		rankId,
 		divisionId: position.divisionId,
 		positionId,
@@ -254,7 +257,9 @@ export function createCaptainPersonnel(input: {
 		},
 		speciesId: input.speciesId,
 		gender: 'unspecified',
-		ageYears: undefined,
+		ageYears: 42,
+		dateOfBirth: buildDateOfBirthForAge(42),
+		personnelKind: 'union',
 		rankId: 'captain',
 		divisionId: 'command',
 		positionId: 'command_officer',

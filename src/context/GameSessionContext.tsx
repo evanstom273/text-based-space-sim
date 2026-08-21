@@ -14,6 +14,8 @@ import type {
 } from '../types/commandProfile';
 import type { ShipStateSnapshot } from '../utils/shipPersistence';
 import { SCENE_FADE_MS } from '../hooks/useSceneTransition';
+import { getAgeYearsOnAbsoluteDay } from '../domain/personnel/age';
+import { syncRosterAgesFromDateOfBirth } from '../domain/personnel/roster';
 import {
 	createCommandProfile,
 	deleteProfileFromStore,
@@ -126,10 +128,22 @@ export function GameSessionProvider({ children }: { children: ReactNode }) {
 		(snapshot: ShipStateSnapshot) => {
 			if (!activeProfile) return;
 
+			const crew = activeProfile.future.crew
+				? syncRosterAgesFromDateOfBirth(
+						activeProfile.future.crew,
+						snapshot.absoluteDay,
+						getAgeYearsOnAbsoluteDay,
+					)
+				: activeProfile.future.crew;
+
 			const updated: CommandProfile = {
 				...activeProfile,
 				updatedAt: Date.now(),
 				simulation: snapshot,
+				future: {
+					...activeProfile.future,
+					crew,
+				},
 			};
 			const store = upsertProfile(loadProfileStore(), updated);
 			persistStore(store.profiles);
