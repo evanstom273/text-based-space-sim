@@ -14,6 +14,11 @@ import { buildCharacterSystemInstruction } from './characterContext';
 import { generateGeminiContent, type GeminiContent, type GeminiGenerateContentResult } from './geminiApi';
 import { loadGeminiSettings } from '../../utils/geminiSettings';
 
+/** Loads terminal-local credentials at request time. Never persisted on CommandProfile. */
+function getTerminalGeminiSettings() {
+	return loadGeminiSettings();
+}
+
 export interface CrewConversationRequest {
 	profile: CommandProfile;
 	roster: CrewRosterState;
@@ -62,7 +67,7 @@ export async function sendCrewConversationMessage(
 		};
 	}
 
-	const settings = loadGeminiSettings();
+	const settings = getTerminalGeminiSettings();
 	if (!settings?.apiKey.trim()) {
 		return {
 			ok: false,

@@ -193,7 +193,8 @@ export function SettingsApp(_props: SettingsAppProps) {
 					<h3 className="module-heading">Gemini integration</h3>
 					<p className="module-copy-muted mt-1">
 						Store a Google Gemini API key on this terminal for optional AI-assisted crew
-						communication. Validate the key against the selected model, then save it locally.
+						communication. Keys stay in terminal settings only — not in command profile saves.
+						Validate the key against the selected model, then save it locally.
 					</p>
 
 					<div className="module-inset mt-3 rounded-sm px-3 py-2 terminal-bevel-sm">

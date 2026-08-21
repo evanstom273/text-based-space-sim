@@ -1,5 +1,12 @@
 import { generateGeminiContent } from '../services/gemini/geminiApi';
 
+/**
+ * Terminal-local Gemini credentials and model selection.
+ *
+ * Stored under `union-terminal-gemini-settings` in localStorage only.
+ * Intentionally separate from Command Profile / exportable save data.
+ * Conversation transcripts live on the profile; API keys never do.
+ */
 const STORAGE_KEY = 'union-terminal-gemini-settings';
 const STORAGE_VERSION = 1;
 

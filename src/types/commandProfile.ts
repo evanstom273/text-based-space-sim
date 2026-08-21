@@ -29,6 +29,7 @@ export interface CommandProfileFutureState {
 	crew?: CrewRosterState;
 	missions?: Record<string, unknown>;
 	shipSystems?: Record<string, unknown>;
+	/** Dialogue transcripts per personnel id. Credentials stay in terminal settings, not here. */
 	communications?: CommandProfileCommunicationsState;
 	logs?: Record<string, unknown>;
 }

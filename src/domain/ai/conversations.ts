@@ -21,6 +21,7 @@ export interface CrewConversationThread {
 
 export interface CommandProfileCommunicationsState {
 	schemaVersion: typeof CREW_CONVERSATION_SCHEMA_VERSION;
+	/** Per-personnel dialogue threads only. Never store API keys or Gemini credentials here. */
 	threads: Record<string, CrewConversationThread>;
 }
 
@@ -82,7 +83,7 @@ export function sanitizeCommunicationsState(
 	raw: unknown,
 ): CommandProfileCommunicationsState | undefined {
 	if (!raw || typeof raw !== 'object') return undefined;
-	const state = raw as Partial<CommandProfileCommunicationsState>;
+	const state = raw as Record<string, unknown>;
 	if (state.schemaVersion !== CREW_CONVERSATION_SCHEMA_VERSION) return undefined;
 	if (!state.threads || typeof state.threads !== 'object') return undefined;
 
