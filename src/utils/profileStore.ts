@@ -18,7 +18,7 @@ import {
 } from '../domain/personnel/roster';
 import type { PersonnelRecord } from '../domain/personnel/personnel';
 import type { PersonnelRelationship } from '../domain/personnel/relationships';
-import { sanitizeCommunicationsState } from '../domain/ai/conversations';
+import { sanitizeCommunicationsState } from '../domain/communications/conversations';
 import {
 	formatDisplayCaptain,
 	formatDisplayRegistry,

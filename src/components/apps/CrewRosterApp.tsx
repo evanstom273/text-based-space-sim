@@ -3,7 +3,6 @@ import { Briefcase, Dna, Heart, Network, UserRound } from 'lucide-react';
 import { AppIconRenderer } from '../common/AppIconRenderer';
 import { useActiveCommandProfile } from '../../context/GameSessionContext';
 import { CrewConversationView } from './crew/CrewConversationView';
-import { isGeminiConfigured } from '../../utils/geminiSettings';
 import {
 	CORE_ATTRIBUTE_IDS,
 	CORE_ATTRIBUTES,
@@ -331,7 +330,6 @@ function PersonnelProfileView({
 	personnelById,
 	onBack,
 	onCommunicate,
-	geminiReady,
 }: {
 	person: PersonnelRecord;
 	roleLabel: string;
@@ -341,7 +339,6 @@ function PersonnelProfileView({
 	personnelById: ReadonlyMap<string, PersonnelRecord>;
 	onBack: () => void;
 	onCommunicate: () => void;
-	geminiReady: boolean;
 }) {
 	const species = getSpecies(person.speciesId);
 	const rank = person.rankId ? getRank(person.rankId) : null;
@@ -523,15 +520,12 @@ function PersonnelProfileView({
 						</h4>
 					</div>
 					<p className="crew-section-copy crew-section-copy--dim">
-						{geminiReady
-							? 'Open a direct subspace channel for free-form dialogue with this crew member.'
-							: 'Configure Gemini in Settings to enable live crew communication.'}
+						Open a direct subspace channel using preset captain transmissions and crew responses.
 					</p>
 					<button
 						type="button"
 						className="game-btn game-btn--primary mt-3"
 						onClick={onCommunicate}
-						disabled={!geminiReady}
 					>
 						COMMUNICATE
 					</button>
@@ -581,7 +575,6 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 	const profile = useActiveCommandProfile();
 	const [selectedId, setSelectedId] = useState<string | null>(null);
 	const [communicatingId, setCommunicatingId] = useState<string | null>(null);
-	const geminiReady = isGeminiConfigured();
 	const [category, setCategory] = useState<RosterCategory>('all');
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filters, setFilters] = useState<RosterFilters>(EMPTY_FILTERS);
@@ -679,7 +672,6 @@ export function CrewRosterApp(_props: CrewRosterAppProps) {
 						personnelById={personnelById}
 						onBack={() => setSelectedId(null)}
 						onCommunicate={() => setCommunicatingId(selectedEntry.person.id)}
-						geminiReady={geminiReady}
 					/>
 				) : (
 					<>

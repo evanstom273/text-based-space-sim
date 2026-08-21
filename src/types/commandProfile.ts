@@ -2,7 +2,7 @@ import type { CalendarEventMarker, TimeSpeedMultiplier } from '../utils/shipCale
 import type { ShipStateSnapshot } from '../utils/shipPersistence';
 import type { CrewRosterState } from '../domain/personnel/roster';
 import type { PersonnelRecord } from '../domain/personnel/personnel';
-import type { CommandProfileCommunicationsState } from '../domain/ai/conversations';
+import type { CommandProfileCommunicationsState } from '../domain/communications/conversations';
 
 export type { CommandProfileCommunicationsState };
 
@@ -29,7 +29,7 @@ export interface CommandProfileFutureState {
 	crew?: CrewRosterState;
 	missions?: Record<string, unknown>;
 	shipSystems?: Record<string, unknown>;
-	/** Dialogue transcripts per personnel id. Credentials stay in terminal settings, not here. */
+	/** Dialogue transcripts per personnel id. */
 	communications?: CommandProfileCommunicationsState;
 	logs?: Record<string, unknown>;
 }
