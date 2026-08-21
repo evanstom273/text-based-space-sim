@@ -44,6 +44,18 @@ GITHUB_PAGES=true npm run build
 npm run preview
 ```
 
+## Desktop Windows Installer (.exe)
+
+You can build a native Windows installer (`.exe`) locally or via GitHub Actions:
+
+```bash
+# Build production bundle and generate Windows NSIS installer
+npm run dist:win
+```
+
+The compiled installer will be saved to `release/Union-Terminal-Setup-*.exe`.
+The build workflow is defined in [`.github/workflows/build-desktop.yml`](.github/workflows/build-desktop.yml).
+
 ## Stack
 
 React 19 · TypeScript · Vite · Tailwind CSS v4 · lucide-react

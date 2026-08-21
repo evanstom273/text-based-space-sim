@@ -1,3 +1,4 @@
+import { Download, ExternalLink, Layers, Monitor } from 'lucide-react';
 import {
 	DEFAULT_TICK_INTERVAL_SECONDS,
 	MAX_TICK_INTERVAL_SECONDS,
@@ -23,6 +24,7 @@ export function SettingsApp(_props: SettingsAppProps) {
 	const { activeProfile } = useGameSession();
 	const handleRelinquishCommand = useRelinquishCommand();
 	const { canInstall, isInstalled, isIos, installMessage, promptInstall } = usePwaInstall();
+	const isDesktopApp = typeof window !== 'undefined' && Boolean(window.electronAPI?.isDesktop);
 
 	const installStatus = isInstalled
 		? 'Installed — running as a standalone terminal app'
@@ -95,15 +97,85 @@ export function SettingsApp(_props: SettingsAppProps) {
 				</section>
 
 				<section className="module-panel rounded-sm p-4 terminal-bevel-sm">
-					<h3 className="module-heading">Install terminal app</h3>
+					<div className="flex items-start justify-between gap-3">
+						<div>
+							<h3 className="module-heading flex items-center gap-2">
+								<Monitor className="h-4 w-4 text-[var(--accent-gold)]" />
+								Windows Desktop Application (.exe)
+							</h3>
+							<p className="module-copy-muted mt-1">
+								Standalone desktop client for Windows. Runs in its own dedicated window without browser
+								chrome, with offline persistence and desktop start shortcuts.
+							</p>
+						</div>
+						{isDesktopApp ? (
+							<span className="rounded-xs border border-[var(--accent-gold)]/40 bg-[var(--accent-gold)]/10 px-2 py-0.5 font-mono text-[10px] text-[var(--accent-gold)]">
+								RUNNING NATIVE
+							</span>
+						) : (
+							<span className="rounded-xs border border-[var(--accent-cyan)]/30 bg-[var(--accent-cyan)]/10 px-2 py-0.5 font-mono text-[10px] text-[var(--accent-cyan)]">
+								WIN64 .EXE
+							</span>
+						)}
+					</div>
+
+					<div className="module-inset mt-3 flex flex-col gap-2 rounded-sm p-3 font-mono text-[11px] terminal-bevel-sm">
+						<div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--panel-border)] pb-2">
+							<span className="text-[var(--module-text-dim)]">Package</span>
+							<span className="text-[var(--module-text)]">Union-Terminal-Setup.exe</span>
+						</div>
+						<div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--panel-border)] pb-2">
+							<span className="text-[var(--module-text-dim)]">Architecture</span>
+							<span className="text-[var(--module-text)]">Windows 10 / 11 (x64)</span>
+						</div>
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<span className="text-[var(--module-text-dim)]">Status</span>
+							<span className={isDesktopApp ? 'text-[var(--accent-gold)]' : 'text-[var(--module-text-dim)]'}>
+								{isDesktopApp
+									? 'Currently operating inside the native desktop terminal'
+									: 'Official release build ready for download and local install'}
+							</span>
+						</div>
+					</div>
+
+					<div className="mt-4 flex flex-wrap gap-3">
+						<a
+							href="https://github.com/evanstom273/text-based-space-sim/releases/latest/download/Union-Terminal-Setup.exe"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="game-btn game-btn--primary inline-flex items-center gap-2"
+						>
+							<Download className="h-4 w-4" />
+							DOWNLOAD .EXE INSTALLER
+						</a>
+						<a
+							href="https://github.com/evanstom273/text-based-space-sim/releases"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="game-btn game-btn--ghost inline-flex items-center gap-2"
+						>
+							<ExternalLink className="h-3.5 w-3.5" />
+							ALL RELEASES & CHANGELOG
+						</a>
+					</div>
+
+					<p className="module-copy-muted mt-3 text-[11px]">
+						Note: On initial launch, Windows SmartScreen may prompt for confirmation on unsigned open-source packages. Choose More info → Run anyway to proceed.
+					</p>
+				</section>
+
+				<section className="module-panel rounded-sm p-4 terminal-bevel-sm">
+					<h3 className="module-heading flex items-center gap-2">
+						<Layers className="h-4 w-4 text-[var(--accent-cyan)]" />
+						Browser / Mobile App (PWA)
+					</h3>
 					<p className="module-copy-muted mt-1">
-						Install Union Terminal as a standalone desktop or mobile app using PWA support. This is
-						not a separate EXE installer — supported browsers can pin the terminal to your device
-						like a native app.
+						Pin Union Terminal to your desktop or mobile home screen directly through your web browser
+						without running an installer package.
 					</p>
 
 					<div className="module-inset mt-3 rounded-sm px-3 py-2 terminal-bevel-sm">
-						<p className="module-label">Install status</p>
+						<p className="module-label">PWA Status</p>
 						<p
 							className={`mt-1 font-mono text-[11px] ${
 								isInstalled ? 'text-[var(--accent-gold)]' : 'text-[var(--module-text-dim)]'
@@ -122,11 +194,11 @@ export function SettingsApp(_props: SettingsAppProps) {
 					<div className="mt-4 flex flex-wrap gap-3">
 						<button
 							type="button"
-							className="game-btn game-btn--primary"
+							className="game-btn game-btn--ghost"
 							onClick={handleInstallClick}
 							disabled={isInstalled || (!canInstall && !import.meta.env.DEV)}
 						>
-							{isInstalled ? 'INSTALLED' : 'INSTALL TERMINAL APP'}
+							{isInstalled ? 'PWA INSTALLED' : 'INSTALL VIA BROWSER (PWA)'}
 						</button>
 					</div>
 
