@@ -6,7 +6,11 @@ import {
 	type ProfileStoreData,
 } from '../types/commandProfile';
 import { PERSONNEL_SCHEMA_VERSION } from '../domain/personnel/constants';
-import { createPopulatedCrewRoster } from '../domain/personnel/populationGenerator';
+import {
+	createPopulatedCrewRoster,
+	ensureShipPopulation,
+	isUnpopulatedSeniorRoster,
+} from '../domain/personnel/populationGenerator';
 import {
 	createEmptyCrewRoster,
 	type CrewRosterState,
@@ -89,13 +93,20 @@ function sanitizeProfile(raw: Partial<CommandProfile>): CommandProfile | null {
 		return null;
 	}
 
-	const crew = sanitizeCrew(raw.future?.crew);
+	let crew = sanitizeCrew(raw.future?.crew);
+	let updatedAt = raw.updatedAt ?? Date.now();
+
+	// Repair captain/senior-only saves so ship population + relationships appear.
+	if (crew && isUnpopulatedSeniorRoster(crew)) {
+		crew = ensureShipPopulation(crew);
+		updatedAt = Date.now();
+	}
 
 	return {
 		id: raw.id,
 		version: COMMAND_PROFILE_VERSION,
 		createdAt: raw.createdAt ?? Date.now(),
-		updatedAt: raw.updatedAt ?? Date.now(),
+		updatedAt,
 		captain: {
 			name: raw.captain.name,
 			personnelId: raw.captain.personnelId,
@@ -129,11 +140,25 @@ export function loadProfileStore(): ProfileStoreData {
 			return createEmptyStore();
 		}
 
-		const profiles = parsed.profiles
+		const rawProfiles = parsed.profiles;
+		const profiles = rawProfiles
 			.map((profile) => sanitizeProfile(profile))
 			.filter((profile): profile is CommandProfile => profile !== null);
 
-		return { version: COMMAND_PROFILE_VERSION, profiles };
+		const store: ProfileStoreData = { version: COMMAND_PROFILE_VERSION, profiles };
+
+		// Persist repaired populations so Crew Roster keeps the expanded roster.
+		const needsPersist = profiles.some((profile) => {
+			const before = rawProfiles.find((entry) => entry?.id === profile.id);
+			const previousCount = before?.future?.crew?.personnel?.length ?? 0;
+			const nextCount = profile.future.crew?.personnel.length ?? 0;
+			return nextCount > previousCount;
+		});
+		if (needsPersist) {
+			saveProfileStore(store);
+		}
+
+		return store;
 	} catch {
 		return createEmptyStore();
 	}
@@ -142,13 +167,18 @@ export function loadProfileStore(): ProfileStoreData {
 export function saveProfileStore(store: ProfileStoreData): void {
 	if (typeof window === 'undefined') return;
 
-	window.localStorage.setItem(
-		STORAGE_KEY,
-		JSON.stringify({
-			version: COMMAND_PROFILE_VERSION,
-			profiles: store.profiles,
-		}),
-	);
+	try {
+		window.localStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify({
+				version: COMMAND_PROFILE_VERSION,
+				profiles: store.profiles,
+			}),
+		);
+	} catch (error) {
+		console.error('Failed to persist command profiles', error);
+		throw error;
+	}
 }
 
 function buildCrewRoster(input: CreateProfileInput): CrewRosterState {
@@ -180,7 +210,11 @@ function buildCrewRoster(input: CreateProfileInput): CrewRosterState {
 		},
 	};
 
-	return createPopulatedCrewRoster(roster);
+	const populated = createPopulatedCrewRoster(roster);
+	if (isUnpopulatedSeniorRoster(populated)) {
+		console.error('Ship population failed to expand beyond senior staff');
+	}
+	return populated;
 }
 
 export function createCommandProfile(input: CreateProfileInput): CommandProfile {

@@ -577,6 +577,49 @@ export function createPopulatedCrewRoster(baseRoster: CrewRosterState): CrewRost
 	return populateShipRoster(baseRoster);
 }
 
+/**
+ * True when the roster still looks like captain + senior staff only
+ * (population never applied, or an older save from before ship population).
+ */
+export function isUnpopulatedSeniorRoster(roster: CrewRosterState): boolean {
+	if (roster.personnel.length === 0 || roster.personnel.length > 10) {
+		return false;
+	}
+
+	const seniorIds = new Set<string>();
+	if (roster.captainPersonnelId) {
+		seniorIds.add(roster.captainPersonnelId);
+	}
+	for (const personnelId of Object.values(roster.seniorStaff.byPosition)) {
+		if (personnelId) {
+			seniorIds.add(personnelId);
+		}
+	}
+
+	if (seniorIds.size === 0) {
+		return false;
+	}
+
+	return roster.personnel.every((person) => seniorIds.has(person.id));
+}
+
+/**
+ * Expand captain/senior-only rosters into a full ship population.
+ * Safe to call repeatedly — already-populated rosters are returned unchanged.
+ */
+export function ensureShipPopulation(roster: CrewRosterState): CrewRosterState {
+	if (!isUnpopulatedSeniorRoster(roster)) {
+		return {
+			...roster,
+			relationships: roster.relationships ?? [],
+		};
+	}
+	return createPopulatedCrewRoster({
+		...roster,
+		relationships: roster.relationships ?? [],
+	});
+}
+
 export function requirePersonnel(roster: CrewRosterState, personnelId: string): PersonnelRecord {
 	const person = findPersonnelById(roster, personnelId);
 	if (!person) {
